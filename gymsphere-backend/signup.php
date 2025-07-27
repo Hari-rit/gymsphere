@@ -1,50 +1,68 @@
 <?php
+// Allow CORS and set content type
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Headers: Content-Type");
+header("Access-Control-Allow-Methods: POST");
 header("Content-Type: application/json");
 
-// Database credentials
+// Database configuration
 $host = "localhost";
 $user = "root";
 $password = "";
 $dbname = "gymsphere";
 
-// Create connection
+// Create DB connection
 $conn = new mysqli($host, $user, $password, $dbname);
 
-// Check connection
+// Check DB connection
 if ($conn->connect_error) {
-    die(json_encode(["success" => false, "message" => "Connection failed"]));
-}
-
-// Get JSON input
-$data = json_decode(file_get_contents("php://input"), true);
-
-// Extract fields
-$username = $data['username'] ?? '';
-$email = $data['email'] ?? '';
-$plainPassword = $data['password'] ?? '';
-$role = $data['role'] ?? 'member'; // Default role
-
-// Simple validation
-if (!$username || !$email || !$plainPassword) {
-    echo json_encode(["success" => false, "message" => "Missing required fields"]);
+    echo json_encode(["success" => false, "message" => "Database connection failed"]);
     exit;
 }
 
-// Hash password
-$hashedPassword = password_hash($plainPassword, PASSWORD_DEFAULT);
+// Decode incoming JSON
+$data = json_decode(file_get_contents("php://input"), true);
 
-// Insert into database
-$stmt = $conn->prepare("INSERT INTO users (username, email, password, role) VALUES (?, ?, ?, ?)");
-$stmt->bind_param("ssss", $username, $email, $hashedPassword, $role);
+// Extract and validate input
+$username = trim($data['username'] ?? '');
+$email = trim($data['email'] ?? '');
+$plainPassword = $data['password'] ?? '';
+$role = $data['role'] ?? 'member'; // Default to 'member'
 
-if ($stmt->execute()) {
-    echo json_encode(["success" => true, "message" => "User registered successfully"]);
-} else {
-    echo json_encode(["success" => false, "message" => "Error: " . $stmt->error]);
+// Simple field validation
+if (empty($username) || empty($email) || empty($plainPassword)) {
+    echo json_encode(["success" => false, "message" => "Please fill in all required fields."]);
+    exit;
 }
 
-$stmt->close();
+// Check for duplicate username/email
+$checkStmt = $conn->prepare("SELECT id FROM users WHERE username = ? OR email = ?");
+$checkStmt->bind_param("ss", $username, $email);
+$checkStmt->execute();
+$checkStmt->store_result();
+
+if ($checkStmt->num_rows > 0) {
+    echo json_encode(["success" => false, "message" => "Username or email already exists."]);
+    $checkStmt->close();
+    $conn->close();
+    exit;
+}
+$checkStmt->close();
+
+// Hash password before storing
+$hashedPassword = password_hash($plainPassword, PASSWORD_DEFAULT);
+
+// Insert new user
+$insertStmt = $conn->prepare("INSERT INTO users (username, email, password, role) VALUES (?, ?, ?, ?)");
+$insertStmt->bind_param("ssss", $username, $email, $hashedPassword, $role);
+
+if ($insertStmt->execute()) {
+    echo json_encode(["success" => true, "message" => "User registered successfully."]);
+} else {
+    echo json_encode(["success" => false, "message" => "Error: " . $insertStmt->error]);
+}
+
+// Clean up
+$insertStmt->close();
 $conn->close();
 ?>
