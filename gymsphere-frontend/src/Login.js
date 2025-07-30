@@ -1,7 +1,7 @@
 // src/Login.js
 import React, { useState } from 'react';
 
-function Login({ onLoginSuccess }) {
+function Login({ onLogin }) {
   const [form, setForm] = useState({
     username: '',
     password: '',
@@ -24,8 +24,8 @@ function Login({ onLoginSuccess }) {
       const data = await res.json();
       alert(data.message);
 
-      if (data.success && onLoginSuccess) {
-        onLoginSuccess(data.user); // You can store user data in parent or context
+      if (data.success && onLogin) {
+        onLogin(data.user); // ✅ trigger redirect from App.js
       }
     } catch (err) {
       alert('Login failed. Please try again.');
