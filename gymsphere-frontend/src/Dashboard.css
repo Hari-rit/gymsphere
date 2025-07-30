@@ -1,0 +1,15 @@
+/* src/Dashboard.css */
+.dashboard {
+  min-height: 100vh;
+  background-image: url('/gym-bg.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
+
+.navbar .navbar-brand {
+  font-family: 'Bebas Neue', cursive;
+  font-size: 1.8rem;
+  letter-spacing: 1px;
+}

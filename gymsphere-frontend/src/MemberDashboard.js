@@ -3,12 +3,23 @@ import React from 'react';
 
 function MemberDashboard({ username, onLogout }) {
   return (
-    <div className="container text-center mt-5 text-white">
-      <h2>Welcome, {username} (Member)</h2>
-      <p>You are now logged into the GymSphere Member Dashboard.</p>
-      <button className="btn btn-outline-light mt-3" onClick={onLogout}>
-        Logout
-      </button>
+    <div className="text-white">
+      {/* Fixed Navbar */}
+      <nav className="navbar navbar-expand-lg navbar-dark bg-dark fixed-top px-4">
+        <span className="navbar-brand">GymSphere</span>
+        <div className="ms-auto">
+          <span className="me-3">Welcome, {username}</span>
+          <button className="btn btn-danger btn-sm" onClick={onLogout}>
+            Logout
+          </button>
+        </div>
+      </nav>
+
+      {/* Dashboard Content */}
+      <div className="container text-center pt-5 mt-5">
+        <h2>🏋️ Member Dashboard</h2>
+        <p className="lead">Your personalized gym experience starts here.</p>
+      </div>
     </div>
   );
 }
