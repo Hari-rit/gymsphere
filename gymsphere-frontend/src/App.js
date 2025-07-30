@@ -2,10 +2,10 @@
 import React, { useState } from 'react';
 import './App.css';
 import Signup from './Signup';
-// import Login from './Login'; // Add when available
+import Login from './Login';
 
 function App() {
-  const [view, setView] = useState(null); // Form hidden by default
+  const [view, setView] = useState(null); // Form hidden initially
 
   const backgroundStyle = {
     backgroundImage: 'url("/gym-bg.png")',
@@ -47,12 +47,12 @@ function App() {
             </button>
           </div>
 
-          {/* Conditionally Render Form */}
+          {/* Form Display */}
           {view && (
             <div className="d-flex justify-content-center mt-4">
               <div className="card p-4 shadow" style={{ maxWidth: '500px', width: '100%' }}>
                 {view === 'signup' && <Signup />}
-                {view === 'login' && <p><i>Login form goes here</i></p>}
+                {view === 'login' && <Login />}
               </div>
             </div>
           )}

@@ -59,7 +59,7 @@ $insertStmt->bind_param("ssss", $username, $email, $hashedPassword, $role);
 if ($insertStmt->execute()) {
     echo json_encode(["success" => true, "message" => "User registered successfully."]);
 } else {
-    echo json_encode(["success" => false, "message" => "Error: " . $insertStmt->error]);
+    echo json_encode(["success" => false, "message" => "User Already  Exists."]);
 }
 
 // Clean up
