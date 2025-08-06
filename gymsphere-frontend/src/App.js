@@ -7,7 +7,8 @@ import MemberDashboard from './MemberDashboard.jsx';
 import TrainerDashboard from './TrainerDashboard.jsx';
 import LoadingSpinner from './LoadingSpinner';
 import './LoadingSpinner.css';
-import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+import { Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom';
+import ProtectedRoute from './ProtectedRoute';
 
 function App() {
   const [view, setView] = useState(null); // 'signup' or 'login'
@@ -44,7 +45,7 @@ function App() {
       } else if (userData.role === 'trainer') {
         navigate('/trainer');
       }
-    }, 1000); // 1 sec loading spinner
+    }, 1000);
   };
 
   const handleLogout = () => {
@@ -55,7 +56,7 @@ function App() {
     setTimeout(() => {
       navigate('/');
       setTransitioning(false);
-    }, 1000); // 1 sec spinner before home
+    }, 1000);
   };
 
   const backgroundStyle = {
@@ -112,14 +113,27 @@ function App() {
                 </div>
               }
             />
+
+            {/* 🛡️ Protected Routes */}
             <Route
               path="/member"
-              element={<MemberDashboard username={user?.username} onLogout={handleLogout} />}
+              element={
+                <ProtectedRoute user={user} allowedRole="member">
+                  <MemberDashboard username={user?.username} onLogout={handleLogout} />
+                </ProtectedRoute>
+              }
             />
             <Route
               path="/trainer"
-              element={<TrainerDashboard username={user?.username} onLogout={handleLogout} />}
+              element={
+                <ProtectedRoute user={user} allowedRole="trainer">
+                  <TrainerDashboard username={user?.username} onLogout={handleLogout} />
+                </ProtectedRoute>
+              }
             />
+
+            {/* 🔁 Fallback route to redirect unknown paths to home */}
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         )}
       </div>
