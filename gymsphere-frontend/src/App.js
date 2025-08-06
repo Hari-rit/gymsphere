@@ -1,19 +1,36 @@
 // src/App.js
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './App.css';
 import Signup from './Signup';
 import Login from './Login';
-import MemberDashboard from './MemberDashboard';
-import TrainerDashboard from './TrainerDashboard';
-import { Routes, Route, useNavigate } from 'react-router-dom';
+import MemberDashboard from './MemberDashboard.jsx';
+import TrainerDashboard from './TrainerDashboard.jsx';
+import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 
 function App() {
   const [view, setView] = useState(null); // 'signup' or 'login'
   const [user, setUser] = useState(null); // Store user data
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Load user from localStorage on app start
+  useEffect(() => {
+    const storedUser = JSON.parse(localStorage.getItem('user'));
+    if (storedUser) {
+      setUser(storedUser);
+      if (location.pathname === '/') {
+        if (storedUser.role === 'member') {
+          navigate('/member');
+        } else if (storedUser.role === 'trainer') {
+          navigate('/trainer');
+        }
+      }
+    }
+  }, [location.pathname, navigate]);
 
   const handleLoginSuccess = (userData) => {
     setUser(userData);
+    localStorage.setItem('user', JSON.stringify(userData)); // Persist login
     if (userData.role === 'member') {
       navigate('/member');
     } else if (userData.role === 'trainer') {
@@ -24,6 +41,7 @@ function App() {
   const handleLogout = () => {
     setUser(null);
     setView(null);
+    localStorage.removeItem('user'); // Clear saved login
     navigate('/');
   };
 
