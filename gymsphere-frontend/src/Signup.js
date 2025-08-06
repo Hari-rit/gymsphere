@@ -1,6 +1,6 @@
 // src/Signup.js
 import React, { useState } from 'react';
-import LoadingSpinner from './LoadingSpinner'; // 👈 Add this line
+import LoadingSpinner from './LoadingSpinner';
 
 function Signup() {
   const [form, setForm] = useState({
@@ -12,15 +12,45 @@ function Signup() {
 
   const [message, setMessage] = useState(null);
   const [type, setType] = useState('');
-  const [loading, setLoading] = useState(false); // 👈 New loading state
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
+  const validateForm = () => {
+    const { username, email, password } = form;
+
+    if (!username.trim() || !email.trim() || !password.trim()) {
+      setMessage("All fields are required.");
+      setType("danger");
+      return false;
+    }
+
+    // Basic email format check
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setMessage("Invalid email format.");
+      setType("danger");
+      return false;
+    }
+
+    if (password.length < 6) {
+      setMessage("Password must be at least 6 characters.");
+      setType("danger");
+      return false;
+    }
+
+    return true;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true); // 👈 Start loading
+
+    if (!validateForm()) return;
+
+    setLoading(true);
+    setMessage(null);
 
     try {
       const res = await fetch('http://localhost:100/gymsphere-backend/signup.php', {
@@ -48,7 +78,7 @@ function Signup() {
       setMessage('Something went wrong. Please try again.');
       setType('danger');
     } finally {
-      setLoading(false); // 👈 Stop loading
+      setLoading(false);
     }
   };
 
@@ -75,7 +105,6 @@ function Signup() {
               className="form-control"
               placeholder="Enter username"
               onChange={handleChange}
-              required
             />
           </div>
 
@@ -88,7 +117,6 @@ function Signup() {
               className="form-control"
               placeholder="Enter email"
               onChange={handleChange}
-              required
             />
           </div>
 
@@ -101,7 +129,6 @@ function Signup() {
               className="form-control"
               placeholder="Enter password"
               onChange={handleChange}
-              required
             />
           </div>
 
