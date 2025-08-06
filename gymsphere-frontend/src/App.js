@@ -1,5 +1,5 @@
 // src/App.js
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import './App.css';
 import Signup from './Signup';
 import Login from './Login';
@@ -13,11 +13,46 @@ import ProtectedRoute from './ProtectedRoute';
 function App() {
   const [view, setView] = useState(null); // 'signup' or 'login'
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true); // Page load
-  const [transitioning, setTransitioning] = useState(false); // Login/Logout transition
+  const [loading, setLoading] = useState(true);
+  const [transitioning, setTransitioning] = useState(false);
+
   const navigate = useNavigate();
   const location = useLocation();
 
+  const handleLogout = useCallback(() => {
+    setTransitioning(true);
+    setUser(null);
+    setView(null);
+    localStorage.removeItem('user');
+
+    setTimeout(() => {
+      navigate('/');
+      setTransitioning(false);
+    }, 1000);
+  }, [navigate]);
+
+  // ✅ Check session status with backend every 30 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetch('http://localhost/proj/check-session.php', {
+        method: 'GET',
+        credentials: 'include',
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (!data.loggedIn) {
+            handleLogout(); // Session expired
+          }
+        })
+        .catch((err) => {
+          console.error('Session check error:', err);
+        });
+    }, 30000); // every 30 seconds
+
+    return () => clearInterval(interval); // cleanup
+  }, [handleLogout]);
+
+  // On initial load
   useEffect(() => {
     const storedUser = JSON.parse(localStorage.getItem('user'));
     if (storedUser) {
@@ -31,7 +66,7 @@ function App() {
       }
     }
     setLoading(false);
-  }, [location.pathname, navigate]);
+  }, [location.pathname, navigate, handleLogout]);
 
   const handleLoginSuccess = (userData) => {
     setTransitioning(true);
@@ -45,17 +80,6 @@ function App() {
       } else if (userData.role === 'trainer') {
         navigate('/trainer');
       }
-    }, 1000);
-  };
-
-  const handleLogout = () => {
-    setTransitioning(true);
-    setUser(null);
-    setView(null);
-    localStorage.removeItem('user');
-    setTimeout(() => {
-      navigate('/');
-      setTransitioning(false);
     }, 1000);
   };
 
@@ -75,6 +99,7 @@ function App() {
           <LoadingSpinner />
         ) : (
           <Routes>
+            {/* 🏠 Landing Page */}
             <Route
               path="/"
               element={
@@ -114,7 +139,7 @@ function App() {
               }
             />
 
-            {/* 🛡️ Protected Routes */}
+            {/* 🛡️ Role-based Dashboards */}
             <Route
               path="/member"
               element={
@@ -132,7 +157,7 @@ function App() {
               }
             />
 
-            {/* 🔁 Fallback route to redirect unknown paths to home */}
+            {/* 🔁 Catch All */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         )}
