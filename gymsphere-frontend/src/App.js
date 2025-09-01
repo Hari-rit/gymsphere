@@ -16,6 +16,16 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [transitioning, setTransitioning] = useState(false);
 
+  // Member form state
+  const [formData, setFormData] = useState({
+    age: '',
+    height: '',
+    weight: '',
+    fitnessGoal: '',
+    experience: '',
+  });
+  const [submitted, setSubmitted] = useState(false);
+
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -83,6 +93,31 @@ function App() {
     }, 1000);
   };
 
+  // ✅ Member form submit
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await fetch("http://localhost/proj/saveMemberDetails.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          ...formData, 
+          user_id: user?.id // pass logged-in user id
+        }),
+      });
+      const result = await response.json();
+      if (result.success) {
+        alert("Details submitted! Waiting for trainer approval.");
+        setSubmitted(true);
+      } else {
+        alert("Error: " + result.message);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Something went wrong!");
+    }
+  };
+
   const backgroundStyle = {
     backgroundImage: 'url("/gym-bg.png")',
     backgroundSize: 'cover',
@@ -144,7 +179,14 @@ function App() {
               path="/member"
               element={
                 <ProtectedRoute user={user} allowedRole="member">
-                  <MemberDashboard username={user?.username} onLogout={handleLogout} />
+                  <MemberDashboard 
+                    username={user?.username} 
+                    onLogout={handleLogout} 
+                    formData={formData} 
+                    setFormData={setFormData} 
+                    onSubmit={handleSubmit} 
+                    submitted={submitted}
+                  />
                 </ProtectedRoute>
               }
             />
