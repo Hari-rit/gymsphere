@@ -5,6 +5,8 @@ import { Link } from "react-router-dom";
 function MemberDashboard({ username, userId, onLogout }) {
   const [submitted, setSubmitted] = useState(false);
   const [status, setStatus] = useState("");
+  const [showWorkout, setShowWorkout] = useState(false);
+  const [showDiet, setShowDiet] = useState(false);
 
   const [memberData, setMemberData] = useState({
     name: "",
@@ -16,13 +18,11 @@ function MemberDashboard({ username, userId, onLogout }) {
     worked_out_before: "no",
     experience_years: 0,
     experience_months: 0,
-    images: [],
   });
 
   useEffect(() => {
-    // Mock fetch status, replace with API later
     const mockStatus = {
-      plan_status: "pending", // pending, approved, rejected
+      plan_status: "pending",
       submitted: false,
     };
     setStatus(mockStatus.plan_status);
@@ -34,23 +34,28 @@ function MemberDashboard({ username, userId, onLogout }) {
     setMemberData({ ...memberData, [name]: value });
   };
 
-  const handleFileChange = (e) => {
-    setMemberData({ ...memberData, images: Array.from(e.target.files) });
+  const handleSliderChange = (e) => {
+    const { name, value } = e.target;
+    setMemberData({ ...memberData, [name]: Number(value) });
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     setSubmitted(true);
     setStatus("pending");
-    alert("Details submitted successfully!");
-    // TODO: Submit to backend API
+    alert("✅ Details submitted successfully!");
+  };
+
+  const handleCopy = (text) => {
+    navigator.clipboard.writeText(text);
+    alert("Copied to clipboard!");
   };
 
   return (
     <div
       className="text-white min-vh-100"
       style={{
-        backgroundImage: `url('/background.jpg')`, // Replace with your gym image path
+        backgroundImage: `url('/background.jpg')`,
         backgroundSize: "cover",
         backgroundPosition: "center",
       }}
@@ -69,10 +74,16 @@ function MemberDashboard({ username, userId, onLogout }) {
         </div>
       </nav>
 
-      <div className="d-flex justify-content-center align-items-start py-5" style={{ paddingTop: "120px" }}>
-        {/* Form Card */}
+      <div
+        className="d-flex justify-content-center align-items-start py-5"
+        style={{ paddingTop: "120px" }}
+      >
+        {/* Fitness Form */}
         {!submitted && (
-          <div className="card bg-dark bg-opacity-90 text-white shadow-lg rounded-4 p-4" style={{ maxWidth: "700px", width: "100%" }}>
+          <div
+            className="card bg-dark bg-opacity-90 text-white shadow-lg rounded-4 p-4"
+            style={{ maxWidth: "700px", width: "100%" }}
+          >
             <h3 className="text-center mb-4">Submit Your Fitness Details</h3>
             <form onSubmit={handleSubmit}>
               <div className="row g-3">
@@ -87,6 +98,7 @@ function MemberDashboard({ username, userId, onLogout }) {
                     required
                   />
                 </div>
+
                 <div className="col-md-3">
                   <label className="form-label">Age</label>
                   <input
@@ -94,13 +106,16 @@ function MemberDashboard({ username, userId, onLogout }) {
                     className="form-control bg-secondary text-white border-0"
                     name="age"
                     value={memberData.age}
-                    onChange={(e) => {
-                      const value = Math.max(0, Math.min(100, Number(e.target.value)));
-                      setMemberData({ ...memberData, age: value });
-                    }}
+                    onChange={(e) =>
+                      setMemberData({
+                        ...memberData,
+                        age: Math.max(0, Math.min(100, Number(e.target.value))),
+                      })
+                    }
                     required
                   />
                 </div>
+
                 <div className="col-md-3">
                   <label className="form-label">Height (cm)</label>
                   <input
@@ -151,7 +166,9 @@ function MemberDashboard({ username, userId, onLogout }) {
                 </div>
 
                 <div className="col-md-6">
-                  <label className="form-label">Have you been working out before?</label>
+                  <label className="form-label">
+                    Have you been working out before?
+                  </label>
                   <select
                     className="form-select bg-secondary text-white border-0"
                     name="worked_out_before"
@@ -178,7 +195,7 @@ function MemberDashboard({ username, userId, onLogout }) {
                           min="0"
                           max="50"
                           value={memberData.experience_years}
-                          onChange={handleInputChange}
+                          onChange={handleSliderChange}
                         />
                       </div>
                       <div className="flex-grow-1">
@@ -192,23 +209,12 @@ function MemberDashboard({ username, userId, onLogout }) {
                           min="0"
                           max="11"
                           value={memberData.experience_months}
-                          onChange={handleInputChange}
+                          onChange={handleSliderChange}
                         />
                       </div>
                     </div>
                   </div>
                 )}
-
-                <div className="col-12 mt-3">
-                  <label className="form-label">Upload Body Image (optional)</label>
-                  <input
-                    type="file"
-                    className="form-control bg-secondary text-white border-0"
-                    name="images"
-                    onChange={handleFileChange}
-                    multiple
-                  />
-                </div>
 
                 <div className="col-12 mt-4 text-center">
                   <button className="btn btn-success btn-lg px-5" type="submit">
@@ -220,30 +226,69 @@ function MemberDashboard({ username, userId, onLogout }) {
           </div>
         )}
 
-        {/* Dashboard Buttons */}
-        {submitted && status === "approved" && (
-          <div className="d-flex flex-column align-items-center gap-4 mt-5">
-            <button className="btn btn-primary btn-lg px-5 shadow">Show Fitness Plan</button>
-            <button className="btn btn-info btn-lg px-5 shadow">Show Diet Plan</button>
-            <button className="btn btn-warning btn-lg px-5 shadow">Mark Attendance</button>
-
-
-
-
-
-          </div>
-        )}
-
-        {/* Messages */}
+        {/* Submitted Status */}
         {submitted && status === "pending" && (
           <p className="lead mt-5 text-center text-secondary">
             ⏳ Waiting for trainer to review your details...
           </p>
         )}
+
         {submitted && status === "rejected" && (
           <p className="lead mt-5 text-center text-warning">
             ⚠️ Trainer is preparing a personalized plan for you, please wait.
           </p>
+        )}
+
+        {submitted && status === "approved" && (
+          <div className="d-flex flex-column align-items-center gap-4 mt-5">
+            <button
+              className="btn btn-primary btn-lg px-5 shadow"
+              onClick={() => setShowWorkout(!showWorkout)}
+            >
+              {showWorkout ? "Hide Workout Plan" : "Show Workout Plan"}
+            </button>
+
+            {showWorkout && (
+              <div className="card bg-dark text-white p-3 shadow">
+                <h5>Workout Plan</h5>
+                <p>Push/Pull/Legs 6x per week with progressive overload.</p>
+                <button
+                  className="btn btn-outline-light btn-sm"
+                  onClick={() =>
+                    handleCopy("Push/Pull/Legs 6x per week with progressive overload.")
+                  }
+                >
+                  📋 Copy
+                </button>
+              </div>
+            )}
+
+            <button
+              className="btn btn-info btn-lg px-5 shadow"
+              onClick={() => setShowDiet(!showDiet)}
+            >
+              {showDiet ? "Hide Diet Plan" : "Show Diet Plan"}
+            </button>
+
+            {showDiet && (
+              <div className="card bg-dark text-white p-3 shadow">
+                <h5>Diet Plan</h5>
+                <p>High protein (2g/kg bodyweight), complex carbs, healthy fats.</p>
+                <button
+                  className="btn btn-outline-light btn-sm"
+                  onClick={() =>
+                    handleCopy("High protein (2g/kg bodyweight), complex carbs, healthy fats.")
+                  }
+                >
+                  📋 Copy
+                </button>
+              </div>
+            )}
+
+            <button className="btn btn-warning btn-lg px-5 shadow">
+              Mark Attendance
+            </button>
+          </div>
         )}
       </div>
     </div>

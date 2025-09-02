@@ -31,7 +31,7 @@ function App() {
     }, 1000);
   }, [navigate]);
 
-  // ✅ Check session status with backend every 30 seconds
+  // ✅ Session check every 30 seconds
   useEffect(() => {
     const interval = setInterval(() => {
       fetch('http://localhost/gymsphere-backend/check-session.php', {
@@ -44,29 +44,24 @@ function App() {
             handleLogout(); // Session expired
           }
         })
-        .catch((err) => {
-          console.error('Session check error:', err);
-        });
-    }, 30000); // every 30 seconds
+        .catch((err) => console.error('Session check error:', err));
+    }, 30000);
 
-    return () => clearInterval(interval); // cleanup
+    return () => clearInterval(interval);
   }, [handleLogout]);
 
-  // On initial load
+  // ✅ On initial load, check localStorage
   useEffect(() => {
     const storedUser = JSON.parse(localStorage.getItem('user'));
     if (storedUser) {
       setUser(storedUser);
       if (location.pathname === '/') {
-        if (storedUser.role === 'member') {
-          navigate('/member');
-        } else if (storedUser.role === 'trainer') {
-          navigate('/trainer');
-        }
+        if (storedUser.role === 'member') navigate('/member');
+        else if (storedUser.role === 'trainer') navigate('/trainer');
       }
     }
     setLoading(false);
-  }, [location.pathname, navigate, handleLogout]);
+  }, [location.pathname, navigate]);
 
   const handleLoginSuccess = (userData) => {
     setTransitioning(true);
@@ -75,24 +70,10 @@ function App() {
 
     setTimeout(() => {
       setTransitioning(false);
-      if (userData.role === 'member') {
-        navigate('/member');
-      } else if (userData.role === 'trainer') {
-        navigate('/trainer');
-      }
+      if (userData.role === 'member') navigate('/member');
+      else if (userData.role === 'trainer') navigate('/trainer');
     }, 1000);
   };
-
-
-
-
-
-
-
-
-
-
-
 
   const backgroundStyle = {
     backgroundImage: 'url("/gym-bg.png")',
