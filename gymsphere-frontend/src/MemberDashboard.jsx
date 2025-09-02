@@ -20,13 +20,23 @@ function MemberDashboard({ username, userId, onLogout }) {
     experience_months: 0,
   });
 
+  const [plan, setPlan] = useState(null); // fetched workout/diet plan
+
+  // 🔹 Check if plan already exists on load
   useEffect(() => {
-    const mockStatus = {
-      plan_status: "pending",
-      submitted: false,
-    };
-    setStatus(mockStatus.plan_status);
-    setSubmitted(mockStatus.submitted);
+    fetch("http://localhost:100/gymsphere-backend/get_plan.php", {
+      method: "GET",
+      credentials: "include",
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.plan) {
+          setSubmitted(true);
+          setStatus("approved");
+          setPlan(data.plan);
+        }
+      })
+      .catch((err) => console.error("Error fetching plan:", err));
   }, []);
 
   const handleInputChange = (e) => {
@@ -41,9 +51,27 @@ function MemberDashboard({ username, userId, onLogout }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    setSubmitted(true);
-    setStatus("pending");
-    alert("✅ Details submitted successfully!");
+
+    fetch("http://localhost:100/gymsphere-backend/submit_form.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify(memberData),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          alert("✅ Details submitted successfully!");
+          setSubmitted(true);
+          setStatus("pending");
+        } else {
+          alert("Error: " + data.message);
+        }
+      })
+      .catch((err) => {
+        console.error(err);
+        alert("An error occurred. Please try again.");
+      });
   };
 
   const handleCopy = (text) => {
@@ -251,11 +279,13 @@ function MemberDashboard({ username, userId, onLogout }) {
             {showWorkout && (
               <div className="card bg-dark text-white p-3 shadow">
                 <h5>Workout Plan</h5>
-                <p>Push/Pull/Legs 6x per week with progressive overload.</p>
+                <p>
+                  {plan ? plan.workout_plan : "Push/Pull/Legs 6x per week with progressive overload."}
+                </p>
                 <button
                   className="btn btn-outline-light btn-sm"
                   onClick={() =>
-                    handleCopy("Push/Pull/Legs 6x per week with progressive overload.")
+                    handleCopy(plan ? plan.workout_plan : "Push/Pull/Legs 6x per week with progressive overload.")
                   }
                 >
                   📋 Copy
@@ -273,11 +303,13 @@ function MemberDashboard({ username, userId, onLogout }) {
             {showDiet && (
               <div className="card bg-dark text-white p-3 shadow">
                 <h5>Diet Plan</h5>
-                <p>High protein (2g/kg bodyweight), complex carbs, healthy fats.</p>
+                <p>
+                  {plan ? plan.diet_plan : "High protein (2g/kg bodyweight), complex carbs, healthy fats."}
+                </p>
                 <button
                   className="btn btn-outline-light btn-sm"
                   onClick={() =>
-                    handleCopy("High protein (2g/kg bodyweight), complex carbs, healthy fats.")
+                    handleCopy(plan ? plan.diet_plan : "High protein (2g/kg bodyweight), complex carbs, healthy fats.")
                   }
                 >
                   📋 Copy

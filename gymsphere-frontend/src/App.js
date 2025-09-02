@@ -19,22 +19,29 @@ function App() {
   const navigate = useNavigate();
   const location = useLocation();
 
+  // ✅ Logout now calls backend too
   const handleLogout = useCallback(() => {
     setTransitioning(true);
-    setUser(null);
-    setView(null);
-    localStorage.removeItem('user');
 
-    setTimeout(() => {
-      navigate('/');
-      setTransitioning(false);
-    }, 1000);
+    fetch('http://localhost:100/gymsphere-backend/logout.php', {
+      method: 'POST',
+      credentials: 'include', // 🔑 ensures cookie is cleared
+    }).finally(() => {
+      setUser(null);
+      setView(null);
+      localStorage.removeItem('user');
+
+      setTimeout(() => {
+        navigate('/');
+        setTransitioning(false);
+      }, 1000);
+    });
   }, [navigate]);
 
   // ✅ Session check every 30 seconds
   useEffect(() => {
     const interval = setInterval(() => {
-      fetch('http://localhost/gymsphere-backend/check-session.php', {
+      fetch('http://localhost:100/gymsphere-backend/check-session.php', {
         method: 'GET',
         credentials: 'include',
       })
