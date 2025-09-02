@@ -1,10 +1,12 @@
+// src/MemberDashboard.jsx
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 
 function MemberDashboard({ username, userId, onLogout }) {
   const [submitted, setSubmitted] = useState(false);
   const [status, setStatus] = useState("");
-  const [formData, setFormData] = useState({
+
+  const [memberData, setMemberData] = useState({
     name: "",
     age: "",
     height: "",
@@ -18,69 +20,37 @@ function MemberDashboard({ username, userId, onLogout }) {
   });
 
   useEffect(() => {
-    // Mock initial status
-    const mockStatus = { plan_status: "pending", submitted: false };
+    // Mock fetch status, replace with API later
+    const mockStatus = {
+      plan_status: "pending", // pending, approved, rejected
+      submitted: false,
+    };
     setStatus(mockStatus.plan_status);
     setSubmitted(mockStatus.submitted);
   }, []);
 
-  // Handle input changes
-  const handleChange = (e) => {
-    const { name, value, type, files } = e.target;
-    setFormData({
-      ...formData,
-      [name]: type === "file" ? Array.from(files) : value,
-    });
-  };
-
-  const handleSlider = (e) => {
+  const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: parseInt(value, 10),
-    });
+    setMemberData({ ...memberData, [name]: value });
   };
 
-  const handleSubmit = async (e) => {
+  const handleFileChange = (e) => {
+    setMemberData({ ...memberData, images: Array.from(e.target.files) });
+  };
+
+  const handleSubmit = (e) => {
     e.preventDefault();
-
-    const form = new FormData();
-    form.append("user_id", userId);
-    form.append("name", formData.name);
-    form.append("age", formData.age);
-    form.append("height", formData.height);
-    form.append("weight", formData.weight);
-    form.append("fitness_goal", formData.goal);
-    form.append("health_issues", formData.health_issues);
-    form.append("experience_years", formData.experience_years);
-    form.append("experience_months", formData.experience_months);
-
-    formData.images.forEach((file) => form.append("images[]", file));
-
-    try {
-      const res = await fetch(
-        "http://localhost:100/gymsphere-backend/submitMember.php",
-        { method: "POST", body: form }
-      );
-      const result = await res.json();
-      if (result.success) {
-        alert("Details submitted successfully!");
-        setSubmitted(true);
-        setStatus("pending");
-      } else {
-        alert("Failed to submit: " + result.message);
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Failed to submit. Check server connection.");
-    }
+    setSubmitted(true);
+    setStatus("pending");
+    alert("Details submitted successfully!");
+    // TODO: Submit to backend API
   };
 
   return (
     <div
       className="text-white min-vh-100"
       style={{
-        backgroundImage: `url('/background.jpg')`,
+        backgroundImage: `url('/background.jpg')`, // Replace with your gym image path
         backgroundSize: "cover",
         backgroundPosition: "center",
       }}
@@ -99,189 +69,178 @@ function MemberDashboard({ username, userId, onLogout }) {
         </div>
       </nav>
 
-      <div
-        className="d-flex justify-content-center align-items-start py-5"
-        style={{ paddingTop: "120px" }}
-      >
-        {!submitted ? (
-          <div
-            className="card bg-dark bg-opacity-90 text-white shadow-lg rounded-4 p-4"
-            style={{ maxWidth: "700px", width: "100%" }}
-          >
+      <div className="d-flex justify-content-center align-items-start py-5" style={{ paddingTop: "120px" }}>
+        {/* Form Card */}
+        {!submitted && (
+          <div className="card bg-dark bg-opacity-90 text-white shadow-lg rounded-4 p-4" style={{ maxWidth: "700px", width: "100%" }}>
             <h3 className="text-center mb-4">Submit Your Fitness Details</h3>
             <form onSubmit={handleSubmit}>
               <div className="row g-3">
-                {/* Name */}
                 <div className="col-md-6">
-                  <label className="form-label">Full Name</label>
+                  <label className="form-label">Name</label>
                   <input
                     type="text"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
                     className="form-control bg-secondary text-white border-0"
+                    name="name"
+                    value={memberData.name}
+                    onChange={handleInputChange}
                     required
                   />
                 </div>
-
-                {/* Age */}
                 <div className="col-md-3">
                   <label className="form-label">Age</label>
                   <input
                     type="number"
-                    name="age"
-                    value={formData.age}
-                    onChange={handleChange}
                     className="form-control bg-secondary text-white border-0"
-                    min="1"
+                    name="age"
+                    value={memberData.age}
+                    onChange={(e) => {
+                      const value = Math.max(0, Math.min(100, Number(e.target.value)));
+                      setMemberData({ ...memberData, age: value });
+                    }}
                     required
                   />
                 </div>
-
-                {/* Height */}
                 <div className="col-md-3">
                   <label className="form-label">Height (cm)</label>
                   <input
                     type="number"
-                    name="height"
-                    value={formData.height}
-                    onChange={handleChange}
                     className="form-control bg-secondary text-white border-0"
+                    name="height"
+                    value={memberData.height}
+                    onChange={handleInputChange}
                     min="0"
-                    step="0.1"
                     required
                   />
                 </div>
 
-                {/* Weight */}
                 <div className="col-md-6">
                   <label className="form-label">Weight (kg)</label>
                   <input
                     type="number"
-                    name="weight"
-                    value={formData.weight}
-                    onChange={handleChange}
                     className="form-control bg-secondary text-white border-0"
+                    name="weight"
+                    value={memberData.weight}
+                    onChange={handleInputChange}
                     min="0"
-                    step="0.1"
                     required
                   />
                 </div>
 
-                {/* Fitness Goal */}
                 <div className="col-md-6">
                   <label className="form-label">Fitness Goal</label>
                   <input
                     type="text"
-                    name="goal"
-                    value={formData.goal}
-                    onChange={handleChange}
                     className="form-control bg-secondary text-white border-0"
+                    name="goal"
+                    value={memberData.goal}
+                    onChange={handleInputChange}
                     required
                   />
                 </div>
 
-                {/* Health Issues */}
                 <div className="col-md-6">
                   <label className="form-label">Health Issues (if any)</label>
                   <input
                     type="text"
-                    name="health_issues"
-                    value={formData.health_issues}
-                    onChange={handleChange}
                     className="form-control bg-secondary text-white border-0"
+                    name="health_issues"
+                    value={memberData.health_issues}
+                    onChange={handleInputChange}
                   />
                 </div>
 
-                {/* Worked out before */}
                 <div className="col-md-6">
-                  <label className="form-label">Worked Out Before?</label>
+                  <label className="form-label">Have you been working out before?</label>
                   <select
-                    name="worked_out_before"
-                    value={formData.worked_out_before}
-                    onChange={handleChange}
                     className="form-select bg-secondary text-white border-0"
+                    name="worked_out_before"
+                    value={memberData.worked_out_before}
+                    onChange={handleInputChange}
                   >
                     <option value="no">No</option>
                     <option value="yes">Yes</option>
                   </select>
                 </div>
 
-                {/* Experience sliders */}
-                {formData.worked_out_before === "yes" && (
+                {memberData.worked_out_before === "yes" && (
                   <div className="col-12 mt-3">
                     <label className="form-label">Experience</label>
                     <div className="d-flex gap-3 align-items-center">
                       <div className="flex-grow-1">
                         <label className="form-label text-white">
-                          Years: {formData.experience_years}
+                          Years: {memberData.experience_years}
                         </label>
                         <input
                           type="range"
+                          className="form-range"
                           name="experience_years"
                           min="0"
                           max="50"
-                          value={formData.experience_years}
-                          onChange={handleSlider}
-                          className="form-range"
+                          value={memberData.experience_years}
+                          onChange={handleInputChange}
                         />
                       </div>
                       <div className="flex-grow-1">
                         <label className="form-label text-white">
-                          Months: {formData.experience_months}
+                          Months: {memberData.experience_months}
                         </label>
                         <input
                           type="range"
+                          className="form-range"
                           name="experience_months"
                           min="0"
                           max="11"
-                          value={formData.experience_months}
-                          onChange={handleSlider}
-                          className="form-range"
+                          value={memberData.experience_months}
+                          onChange={handleInputChange}
                         />
                       </div>
                     </div>
                   </div>
                 )}
 
-                {/* Body Images */}
                 <div className="col-12 mt-3">
                   <label className="form-label">Upload Body Image (optional)</label>
                   <input
                     type="file"
-                    name="images"
-                    onChange={handleChange}
                     className="form-control bg-secondary text-white border-0"
+                    name="images"
+                    onChange={handleFileChange}
                     multiple
                   />
                 </div>
 
-                {/* Submit */}
                 <div className="col-12 mt-4 text-center">
-                  <button type="submit" className="btn btn-success btn-lg px-5">
+                  <button className="btn btn-success btn-lg px-5" type="submit">
                     Submit
                   </button>
                 </div>
               </div>
             </form>
           </div>
-        ) : status === "approved" ? (
+        )}
+
+        {/* Dashboard Buttons */}
+        {submitted && status === "approved" && (
           <div className="d-flex flex-column align-items-center gap-4 mt-5">
-            <button className="btn btn-primary btn-lg px-5 shadow">
-              Show Fitness Plan
-            </button>
-            <button className="btn btn-info btn-lg px-5 shadow">
-              Show Diet Plan
-            </button>
-            <button className="btn btn-warning btn-lg px-5 shadow">
-              Mark Attendance
-            </button>
+            <button className="btn btn-primary btn-lg px-5 shadow">Show Fitness Plan</button>
+            <button className="btn btn-info btn-lg px-5 shadow">Show Diet Plan</button>
+            <button className="btn btn-warning btn-lg px-5 shadow">Mark Attendance</button>
+
+
+
+
+
           </div>
-        ) : status === "pending" ? (
+        )}
+
+        {/* Messages */}
+        {submitted && status === "pending" && (
           <p className="lead mt-5 text-center text-secondary">
             ⏳ Waiting for trainer to review your details...
           </p>
-        ) : (
+        )}
+        {submitted && status === "rejected" && (
           <p className="lead mt-5 text-center text-warning">
             ⚠️ Trainer is preparing a personalized plan for you, please wait.
           </p>
