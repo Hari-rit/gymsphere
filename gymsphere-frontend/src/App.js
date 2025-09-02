@@ -38,7 +38,7 @@ function App() {
     });
   }, [navigate]);
 
-  // ✅ Session check every 30 seconds
+  // ✅ Session check every 1 minute
   useEffect(() => {
     const interval = setInterval(() => {
       fetch('http://localhost:100/gymsphere-backend/check-session.php', {
@@ -52,7 +52,7 @@ function App() {
           }
         })
         .catch((err) => console.error('Session check error:', err));
-    }, 30000);
+    }, 60000); // 🔄 60,000 ms = 1 minute
 
     return () => clearInterval(interval);
   }, [handleLogout]);

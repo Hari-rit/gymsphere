@@ -22,8 +22,23 @@ function MemberDashboard({ username, userId, onLogout }) {
 
   const [plan, setPlan] = useState(null); // fetched workout/diet plan
 
-  // 🔹 Check if plan already exists on load
+  // 🔹 Check form + plan status on load
   useEffect(() => {
+    // First fetch form status
+    fetch("http://localhost:100/gymsphere-backend/get_member_form.php", {
+      method: "GET",
+      credentials: "include",
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.form) {
+          setSubmitted(true);
+          setStatus(data.form.status);
+        }
+      })
+      .catch((err) => console.error("Error fetching form status:", err));
+
+    // Then fetch plan (if approved)
     fetch("http://localhost:100/gymsphere-backend/get_plan.php", {
       method: "GET",
       credentials: "include",
@@ -285,7 +300,11 @@ function MemberDashboard({ username, userId, onLogout }) {
                 <button
                   className="btn btn-outline-light btn-sm"
                   onClick={() =>
-                    handleCopy(plan ? plan.workout_plan : "Push/Pull/Legs 6x per week with progressive overload.")
+                    handleCopy(
+                      plan
+                        ? plan.workout_plan
+                        : "Push/Pull/Legs 6x per week with progressive overload."
+                    )
                   }
                 >
                   📋 Copy
@@ -309,7 +328,11 @@ function MemberDashboard({ username, userId, onLogout }) {
                 <button
                   className="btn btn-outline-light btn-sm"
                   onClick={() =>
-                    handleCopy(plan ? plan.diet_plan : "High protein (2g/kg bodyweight), complex carbs, healthy fats.")
+                    handleCopy(
+                      plan
+                        ? plan.diet_plan
+                        : "High protein (2g/kg bodyweight), complex carbs, healthy fats."
+                    )
                   }
                 >
                   📋 Copy
