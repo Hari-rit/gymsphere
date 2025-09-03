@@ -25,13 +25,13 @@ function TrainerDashboard({ username, onLogout }) {
     fetchForms();
   }, []);
 
-  // 🔹 Accept Student
-  const handleAccept = (formId) => {
+  // 🔹 Accept Student (by user_id)
+  const handleAccept = (userId) => {
     fetch("http://localhost:100/gymsphere-backend/trainer_accept.php", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
-      body: JSON.stringify({ form_id: formId }),
+      body: JSON.stringify({ user_id: userId }),
     })
       .then((res) => res.json())
       .then((data) => {
@@ -43,14 +43,14 @@ function TrainerDashboard({ username, onLogout }) {
       .catch((err) => console.error("Error accepting student:", err));
   };
 
-  // 🔹 Approve / Reject
-  const handleAction = (formId, action, trainerComment = "") => {
+  // 🔹 Approve / Reject (by user_id now)
+  const handleAction = (userId, action, trainerComment = "") => {
     fetch("http://localhost:100/gymsphere-backend/trainer_action.php", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
       body: JSON.stringify({
-        form_id: formId,
+        user_id: userId,  // ✅ send user_id
         action,
         trainer_comment: trainerComment,
       }),
@@ -59,7 +59,7 @@ function TrainerDashboard({ username, onLogout }) {
       .then((data) => {
         alert(data.message);
         if (data.success) {
-          fetchForms(); // ✅ refresh from DB instead of patching state
+          fetchForms(); // ✅ refresh from DB
         }
       })
       .catch((err) => console.error("Error updating form:", err));
@@ -78,7 +78,6 @@ function TrainerDashboard({ username, onLogout }) {
     forms.filter((f) => f.status === status).length;
 
   return (
-    // ⚠️ all JSX kept exactly as in your file
     <div className="text-white">
       {/* Navbar */}
       <nav className="navbar navbar-expand-lg navbar-dark bg-dark fixed-top px-4">
@@ -175,12 +174,15 @@ function TrainerDashboard({ username, onLogout }) {
                   {form.status}
                 </span>
               </p>
+              {form.assigned_trainer_id && (
+                <p>👨‍🏫 Assigned Trainer: {form.trainer_name}</p>
+              )}
 
               {/* Actions */}
               {form.assigned_trainer_id === null && (
                 <button
                   className="btn btn-success btn-sm"
-                  onClick={() => handleAccept(form.id)}
+                  onClick={() => handleAccept(form.user_id)} // ✅ accept by user_id
                 >
                   🤝 Accept Student
                 </button>
@@ -191,7 +193,7 @@ function TrainerDashboard({ username, onLogout }) {
                   <div className="d-flex gap-2">
                     <button
                       className="btn btn-success btn-sm"
-                      onClick={() => handleAction(form.id, "approve")}
+                      onClick={() => handleAction(form.user_id, "approve")} // ✅ approve by user_id
                     >
                       ✅ Approve
                     </button>
@@ -200,7 +202,7 @@ function TrainerDashboard({ username, onLogout }) {
                       onClick={() => {
                         const comment = prompt("Enter rejection reason:");
                         if (comment !== null)
-                          handleAction(form.id, "reject", comment);
+                          handleAction(form.user_id, "reject", comment); // ✅ reject by user_id
                       }}
                     >
                       ❌ Reject
@@ -238,11 +240,17 @@ function TrainerDashboard({ username, onLogout }) {
                     🎂 Age: {selectedMember.age}
                   </li>
                   <li className="list-group-item bg-dark text-white">
-                    💊 Health Issues: {selectedMember.health_issues || "None"}
+                    💊 Health Issues:{" "}
+                    {selectedMember.health_issues || "None"}
                   </li>
                   <li className="list-group-item bg-dark text-white">
                     📌 Status: {selectedMember.status}
                   </li>
+                  {selectedMember.trainer_name && (
+                    <li className="list-group-item bg-dark text-white">
+                      👨‍🏫 Assigned Trainer: {selectedMember.trainer_name}
+                    </li>
+                  )}
                 </ul>
               </div>
               <div className="modal-footer">
