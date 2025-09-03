@@ -282,67 +282,101 @@ function MemberDashboard({ username, userId, onLogout }) {
           </p>
         )}
 
+        {/* Approved State (Cards Layout) */}
         {submitted && status === "approved" && (
-          <div className="d-flex flex-column align-items-center gap-4 mt-5">
-            <button
-              className="btn btn-primary btn-lg px-5 shadow"
-              onClick={() => setShowWorkout(!showWorkout)}
-            >
-              {showWorkout ? "Hide Workout Plan" : "Show Workout Plan"}
-            </button>
-
-            {showWorkout && (
-              <div className="card bg-dark text-white p-3 shadow">
-                <h5>Workout Plan</h5>
-                <p>
-                  {plan ? plan.workout_plan : "Push/Pull/Legs 6x per week with progressive overload."}
-                </p>
-                <button
-                  className="btn btn-outline-light btn-sm"
-                  onClick={() =>
-                    handleCopy(
-                      plan
-                        ? plan.workout_plan
-                        : "Push/Pull/Legs 6x per week with progressive overload."
-                    )
-                  }
-                >
-                  📋 Copy
-                </button>
+          <div className="container mt-5">
+            <div className="row g-4">
+              {/* Workout Plan Card */}
+              <div className="col-md-4">
+                <div className="card bg-dark text-white shadow rounded-4 p-3 h-100 text-center">
+                  <h5 className="text-primary">💪 Workout Plan</h5>
+                  <p className="small text-muted">
+                    {showWorkout
+                      ? "Hide your personalized workout"
+                      : "View your personalized workout"}
+                  </p>
+                  <button
+                    className="btn btn-primary btn-sm mb-3"
+                    onClick={() => setShowWorkout(!showWorkout)}
+                  >
+                    {showWorkout ? "Hide Plan" : "Show Plan"}
+                  </button>
+                  {showWorkout && (
+                    <div>
+                      <p>
+                        {plan
+                          ? plan.workout_plan
+                          : "Push/Pull/Legs 6x per week with progressive overload."}
+                      </p>
+                      <button
+                        className="btn btn-outline-light btn-sm"
+                        onClick={() =>
+                          handleCopy(
+                            plan
+                              ? plan.workout_plan
+                              : "Push/Pull/Legs 6x per week with progressive overload."
+                          )
+                        }
+                      >
+                        📋 Copy
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
-            )}
 
-            <button
-              className="btn btn-info btn-lg px-5 shadow"
-              onClick={() => setShowDiet(!showDiet)}
-            >
-              {showDiet ? "Hide Diet Plan" : "Show Diet Plan"}
-            </button>
-
-            {showDiet && (
-              <div className="card bg-dark text-white p-3 shadow">
-                <h5>Diet Plan</h5>
-                <p>
-                  {plan ? plan.diet_plan : "High protein (2g/kg bodyweight), complex carbs, healthy fats."}
-                </p>
-                <button
-                  className="btn btn-outline-light btn-sm"
-                  onClick={() =>
-                    handleCopy(
-                      plan
-                        ? plan.diet_plan
-                        : "High protein (2g/kg bodyweight), complex carbs, healthy fats."
-                    )
-                  }
-                >
-                  📋 Copy
-                </button>
+              {/* Diet Plan Card */}
+              <div className="col-md-4">
+                <div className="card bg-dark text-white shadow rounded-4 p-3 h-100 text-center">
+                  <h5 className="text-info">🥗 Diet Plan</h5>
+                  <p className="small text-muted">
+                    {showDiet
+                      ? "Hide your personalized diet"
+                      : "View your personalized diet"}
+                  </p>
+                  <button
+                    className="btn btn-info btn-sm mb-3"
+                    onClick={() => setShowDiet(!showDiet)}
+                  >
+                    {showDiet ? "Hide Plan" : "Show Plan"}
+                  </button>
+                  {showDiet && (
+                    <div>
+                      <p>
+                        {plan
+                          ? plan.diet_plan
+                          : "High protein (2g/kg bodyweight), complex carbs, healthy fats."}
+                      </p>
+                      <button
+                        className="btn btn-outline-light btn-sm"
+                        onClick={() =>
+                          handleCopy(
+                            plan
+                              ? plan.diet_plan
+                              : "High protein (2g/kg bodyweight), complex carbs, healthy fats."
+                          )
+                        }
+                      >
+                        📋 Copy
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
-            )}
 
-            <button className="btn btn-warning btn-lg px-5 shadow">
-              Mark Attendance
-            </button>
+              {/* Attendance Card */}
+              <div className="col-md-4">
+                <div className="card bg-dark text-white shadow rounded-4 p-3 h-100 text-center">
+                  <h5 className="text-warning">📅 Attendance</h5>
+                  <p className="small text-muted">
+                    Mark your daily gym attendance
+                  </p>
+                  <button className="btn btn-warning btn-sm px-4 shadow">
+                    Mark Attendance
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </div>
