@@ -34,7 +34,7 @@ $user_id = (int)$data['user_id'];
 $action = $data['action'];
 $trainer_comment = $data['trainer_comment'] ?? '';
 
-// Handle only approve/reject
+// Handle approve/reject
 if ($action === 'approve' || $action === 'reject') {
     $status = $action === 'approve' ? 'approved' : 'rejected';
 
@@ -65,10 +65,6 @@ if ($action === 'approve' || $action === 'reject') {
     }
 
     if ($stmt->affected_rows > 0) {
-        if ($action === 'approve') {
-            include 'generate_plan.php';
-            generate_plan($user_id, $conn); // ✅ pass user_id here
-        }
         echo json_encode(['success' => true, 'message' => "✅ Student $status successfully"]);
     } else {
         echo json_encode([
@@ -77,6 +73,36 @@ if ($action === 'approve' || $action === 'reject') {
         ]);
     }
 
+// 🔹 Handle generate_plan (new)
+} elseif ($action === 'generate_plan') {
+    $level = strtolower($data['level'] ?? 'beginner');
+
+    // Get the form_id for this user (only if assigned to this trainer and approved)
+    $formStmt = $conn->prepare("
+        SELECT id, status FROM member_forms 
+        WHERE user_id = ? AND assigned_trainer_id = ? LIMIT 1
+    ");
+    $formStmt->bind_param("ii", $user_id, $trainer_id);
+    $formStmt->execute();
+    $formResult = $formStmt->get_result();
+    $formRow = $formResult->fetch_assoc();
+    $formStmt->close();
+
+    if (!$formRow) {
+        echo json_encode(['success' => false, 'message' => 'Form not found or not assigned to you']);
+        exit;
+    }
+    if ($formRow['status'] !== 'approved') {
+        echo json_encode(['success' => false, 'message' => 'Plan can only be generated for approved members']);
+        exit;
+    }
+
+    include 'generate_plan.php';
+    $result = generate_plan($formRow['id'], $level, $conn);
+
+    echo json_encode($result);
+
+// Invalid action
 } else {
     echo json_encode(['success' => false, 'message' => 'Invalid action']);
 }
