@@ -7,6 +7,7 @@ function TrainerDashboard({ username, onLogout }) {
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [selectedMember, setSelectedMember] = useState(null); // profile modal
+  const [planOptionsFor, setPlanOptionsFor] = useState(null); // 🔹 new state
 
   // 🔹 Fetch member forms
   const fetchForms = () => {
@@ -50,7 +51,7 @@ function TrainerDashboard({ username, onLogout }) {
       headers: { "Content-Type": "application/json" },
       credentials: "include",
       body: JSON.stringify({
-        user_id: userId,  // ✅ send user_id
+        user_id: userId, // ✅ send user_id
         action,
         trainer_comment: trainerComment,
       }),
@@ -63,6 +64,33 @@ function TrainerDashboard({ username, onLogout }) {
         }
       })
       .catch((err) => console.error("Error updating form:", err));
+  };
+
+  // 🔹 Generate Plan (new)
+  const handleGeneratePlan = (userId, level) => {
+    fetch("http://localhost:100/gymsphere-backend/trainer_action.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({
+        user_id: userId,
+        action: "generate_plan",
+        level,
+      }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        alert(
+          data.success
+            ? "✅ Plan generated!"
+            : `❌ Failed: ${data.error || data.message}`
+        );
+        if (data.success) {
+          fetchForms();
+          setPlanOptionsFor(null); // 🔹 auto-close the card
+        }
+      })
+      .catch((err) => console.error("Error generating plan:", err));
   };
 
   // 🔹 Filter + Search
@@ -207,6 +235,64 @@ function TrainerDashboard({ username, onLogout }) {
                     >
                       ❌ Reject
                     </button>
+                  </div>
+                )}
+
+              {/* 🔹 Generate Plan (expandable card) */}
+              {form.assigned_trainer_id !== null &&
+                form.status === "approved" && (
+                  <div className="mt-2">
+                    {planOptionsFor === form.user_id ? (
+                      <div className="card bg-secondary text-white p-3 mt-2">
+                        <h6>📋 Member Details</h6>
+                        <p>⚖️ Weight: {form.weight} kg</p>
+                        <p>📏 Height: {form.height} cm</p>
+                        <p>
+                          ⏳ Experience: {form.experience_years}y{" "}
+                          {form.experience_months}m
+                        </p>
+                        <p>🎯 Goal: {form.goal}</p>
+                        <div className="d-flex gap-2 mt-2">
+                          <button
+                            className="btn btn-outline-light btn-sm"
+                            onClick={() =>
+                              handleGeneratePlan(form.user_id, "beginner")
+                            }
+                          >
+                            🟢 Beginner Plan
+                          </button>
+                          <button
+                            className="btn btn-outline-warning btn-sm"
+                            onClick={() =>
+                              handleGeneratePlan(form.user_id, "intermediate")
+                            }
+                          >
+                            🟡 Intermediate Plan
+                          </button>
+                          <button
+                            className="btn btn-outline-danger btn-sm"
+                            onClick={() =>
+                              handleGeneratePlan(form.user_id, "advanced")
+                            }
+                          >
+                            🔴 Advanced Plan
+                          </button>
+                        </div>
+                        <button
+                          className="btn btn-sm btn-outline-light mt-2"
+                          onClick={() => setPlanOptionsFor(null)}
+                        >
+                          ❌ Cancel
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        className="btn btn-primary btn-sm"
+                        onClick={() => setPlanOptionsFor(form.user_id)}
+                      >
+                        ⚡ Generate Plan
+                      </button>
+                    )}
                   </div>
                 )}
             </div>

@@ -5,8 +5,10 @@ import { Link } from "react-router-dom";
 function MemberDashboard({ username, userId, onLogout }) {
   const [submitted, setSubmitted] = useState(false);
   const [status, setStatus] = useState("");
-  const [showWorkout, setShowWorkout] = useState(false);
-  const [showDiet, setShowDiet] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // which section to show when approved
+  const [activeView, setActiveView] = useState("dashboard"); // "dashboard" | "workout" | "diet" | "attendance"
 
   const [memberData, setMemberData] = useState({
     name: "",
@@ -20,11 +22,10 @@ function MemberDashboard({ username, userId, onLogout }) {
     experience_months: 0,
   });
 
-  const [plan, setPlan] = useState(null); // fetched workout/diet plan
+  const [plan, setPlan] = useState(null);
 
-  // 🔹 Check form + plan status on load
+  // load form status + plan
   useEffect(() => {
-    // First fetch form status
     fetch("http://localhost:100/gymsphere-backend/get_member_form.php", {
       method: "GET",
       credentials: "include",
@@ -38,7 +39,6 @@ function MemberDashboard({ username, userId, onLogout }) {
       })
       .catch((err) => console.error("Error fetching form status:", err));
 
-    // Then fetch plan (if approved)
     fetch("http://localhost:100/gymsphere-backend/get_plan.php", {
       method: "GET",
       credentials: "include",
@@ -95,39 +95,149 @@ function MemberDashboard({ username, userId, onLogout }) {
   };
 
   return (
-    <div
-      className="text-white min-vh-100"
-      style={{
-        backgroundImage: `url('/background.jpg')`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-      }}
-    >
-      {/* Navbar */}
-      <nav className="navbar navbar-expand-lg navbar-dark bg-dark fixed-top px-4 shadow">
-        <Link className="navbar-brand text-white text-decoration-none" to="/">
-          🏠 Home
-        </Link>
-        <div className="ms-auto d-flex align-items-center gap-3">
+<div
+  className="text-white min-vh-100"
+  style={{
+    backgroundImage: "url('/background.jpg')",
+    backgroundSize: "cover",
+    backgroundPosition: "center",
+  }}
+>
+      {/* ===== Navbar ===== */}
+      <nav className="navbar navbar-expand-lg navbar-dark bg-dark fixed-top px-4 shadow-sm">
+        <div className="d-flex align-items-center gap-2">
+          <Link
+            className="navbar-brand text-white text-decoration-none d-flex align-items-center gap-2"
+            to="/"
+          >
+            <span className="fs-4">🏠</span>
+            <span>Home</span>
+          </Link>
           <span className="badge bg-success">Member</span>
-          <span className="text-white">Welcome, {username}</span>
+        </div>
+
+        <div className="ms-auto d-flex align-items-center gap-3">
+          <button
+            className="btn btn-sm btn-outline-light d-flex align-items-center gap-2 rounded-pill"
+            style={{ backgroundColor: "rgba(255,255,255,0.1)" }}
+            onClick={() => setSidebarOpen(true)}
+          >
+            <div
+              className="rounded-circle bg-primary text-white d-flex justify-content-center align-items-center"
+              style={{ width: "28px", height: "28px", fontSize: "0.8rem" }}
+            >
+              {username[0]?.toUpperCase()}
+            </div>
+            <span className="text-truncate" style={{ maxWidth: 120 }}>
+              Welcome, {username}
+            </span>
+            ▾
+          </button>
+
           <button className="btn btn-danger btn-sm" onClick={onLogout}>
             Logout
           </button>
         </div>
       </nav>
 
+      {/* ===== Sidebar ===== */}
+      {sidebarOpen && (
+        <>
+          <div
+            className="position-fixed top-0 start-0 h-100 bg-dark text-white shadow"
+            style={{ width: "250px", zIndex: 1050 }}
+          >
+            <div className="d-flex justify-content-between align-items-center mb-3 p-2 border-bottom">
+              <div className="fw-bold">GymSphere</div>
+              <button
+                className="btn btn-sm btn-outline-light"
+                onClick={() => setSidebarOpen(false)}
+              >
+                ✕
+              </button>
+            </div>
+            <ul className="list-unstyled px-2">
+              <li>
+                <button
+                  className="btn w-100 text-start text-white"
+                  onClick={() => {
+                    setActiveView("dashboard");
+                    setSidebarOpen(false);
+                  }}
+                >
+                  🏠 Dashboard
+                </button>
+              </li>
+              <li>
+                <button
+                  className="btn w-100 text-start text-white"
+                  onClick={() => {
+                    setActiveView("workout");
+                    setSidebarOpen(false);
+                  }}
+                >
+                  💪 Workout Plan
+                </button>
+              </li>
+              <li>
+                <button
+                  className="btn w-100 text-start text-white"
+                  onClick={() => {
+                    setActiveView("diet");
+                    setSidebarOpen(false);
+                  }}
+                >
+                  🥗 Diet Plan
+                </button>
+              </li>
+              <li>
+                <button
+                  className="btn w-100 text-start text-white"
+                  onClick={() => {
+                    setActiveView("attendance");
+                    setSidebarOpen(false);
+                  }}
+                >
+                  📅 Attendance
+                </button>
+              </li>
+              <li>
+                <button className="btn w-100 text-start text-muted mt-2" disabled>
+                  📊 Progress (Soon)
+                </button>
+              </li>
+            </ul>
+          </div>
+          <div
+            className="position-fixed top-0 start-0 w-100 h-100 bg-dark bg-opacity-50"
+            style={{ zIndex: 1040 }}
+            onClick={() => setSidebarOpen(false)}
+          />
+        </>
+      )}
+
+      {/* ===== Page Content ===== */}
       <div
         className="d-flex justify-content-center align-items-start py-5"
         style={{ paddingTop: "120px" }}
       >
-        {/* Fitness Form */}
+        {/* ===== Fitness Form (unchanged & complete so handlers are used) ===== */}
         {!submitted && (
           <div
-            className="card bg-dark bg-opacity-90 text-white shadow-lg rounded-4 p-4"
-            style={{ maxWidth: "700px", width: "100%" }}
+            className="card text-white shadow-lg rounded-4 p-4 w-100"
+            style={{
+              maxWidth: "820px",
+              backgroundColor: "rgba(0,0,0,0.75)",
+            }}
           >
             <h3 className="text-center mb-4">Submit Your Fitness Details</h3>
+
+            <div className="d-flex justify-content-center gap-3 mb-3 small text-muted">
+              <span className="badge bg-secondary bg-opacity-50">Step 1 · Details</span>
+              <span className="badge bg-secondary bg-opacity-25">Step 2 · Review</span>
+              <span className="badge bg-secondary bg-opacity-25">Step 3 · Plan</span>
+            </div>
+
             <form onSubmit={handleSubmit}>
               <div className="row g-3">
                 <div className="col-md-6">
@@ -209,9 +319,7 @@ function MemberDashboard({ username, userId, onLogout }) {
                 </div>
 
                 <div className="col-md-6">
-                  <label className="form-label">
-                    Have you been working out before?
-                  </label>
+                  <label className="form-label">Have you been working out before?</label>
                   <select
                     className="form-select bg-secondary text-white border-0"
                     name="worked_out_before"
@@ -269,114 +377,155 @@ function MemberDashboard({ username, userId, onLogout }) {
           </div>
         )}
 
-        {/* Submitted Status */}
+        {/* ===== Pending / Rejected ===== */}
         {submitted && status === "pending" && (
-          <p className="lead mt-5 text-center text-secondary">
-            ⏳ Waiting for trainer to review your details...
-          </p>
+          <div className="text-center mt-5">
+            <div className="spinner-border text-light mb-3" role="status"></div>
+            <p className="lead text-secondary">
+              ⏳ Waiting for trainer to review your details...
+            </p>
+          </div>
         )}
-
         {submitted && status === "rejected" && (
-          <p className="lead mt-5 text-center text-warning">
-            ⚠️ Trainer is preparing a personalized plan for you, please wait.
-          </p>
+          <div className="text-center mt-5">
+            <div className="spinner-border text-warning mb-3" role="status"></div>
+            <p className="lead text-warning">
+              ⚠️ Trainer is preparing a personalized plan for you, please wait.
+            </p>
+          </div>
         )}
 
-        {/* Approved State (Cards Layout) */}
+        {/* ===== Approved (single view at a time) ===== */}
         {submitted && status === "approved" && (
-          <div className="container mt-5">
-            <div className="row g-4">
-              {/* Workout Plan Card */}
-              <div className="col-md-4">
-                <div className="card bg-dark text-white shadow rounded-4 p-3 h-100 text-center">
-                  <h5 className="text-primary">💪 Workout Plan</h5>
-                  <p className="small text-muted">
-                    {showWorkout
-                      ? "Hide your personalized workout"
-                      : "View your personalized workout"}
+          <div className="container mt-3">
+            {activeView === "dashboard" && (
+              <header className="mb-4 d-flex justify-content-center">
+                {/* readable panel for welcome text */}
+                <div
+                  className="rounded-4 shadow"
+                  style={{
+                    background: "rgba(0,0,0,0.55)",
+                    backdropFilter: "saturate(140%) blur(2px)",
+                    padding: "18px 24px",
+                    maxWidth: 920,
+                    width: "100%",
+                    textAlign: "center",
+                  }}
+                >
+                  <h1 className="mb-2" style={{ letterSpacing: "1px" }}>
+                    WELCOME BACK 👋
+                  </h1>
+                  <p className="mb-0" style={{ color: "rgba(255,255,255,0.85)" }}>
+                    Use the sidebar to access your workout, diet, and attendance.
                   </p>
-                  <button
-                    className="btn btn-primary btn-sm mb-3"
-                    onClick={() => setShowWorkout(!showWorkout)}
-                  >
-                    {showWorkout ? "Hide Plan" : "Show Plan"}
-                  </button>
-                  {showWorkout && (
-                    <div>
-                      <p>
-                        {plan
-                          ? plan.workout_plan
-                          : "Push/Pull/Legs 6x per week with progressive overload."}
-                      </p>
-                      <button
-                        className="btn btn-outline-light btn-sm"
-                        onClick={() =>
-                          handleCopy(
-                            plan
-                              ? plan.workout_plan
-                              : "Push/Pull/Legs 6x per week with progressive overload."
-                          )
-                        }
-                      >
-                        📋 Copy
-                      </button>
-                    </div>
-                  )}
                 </div>
-              </div>
+              </header>
+            )}
 
-              {/* Diet Plan Card */}
-              <div className="col-md-4">
-                <div className="card bg-dark text-white shadow rounded-4 p-3 h-100 text-center">
-                  <h5 className="text-info">🥗 Diet Plan</h5>
-                  <p className="small text-muted">
-                    {showDiet
-                      ? "Hide your personalized diet"
-                      : "View your personalized diet"}
-                  </p>
-                  <button
-                    className="btn btn-info btn-sm mb-3"
-                    onClick={() => setShowDiet(!showDiet)}
-                  >
-                    {showDiet ? "Hide Plan" : "Show Plan"}
-                  </button>
-                  {showDiet && (
-                    <div>
-                      <p>
-                        {plan
-                          ? plan.diet_plan
-                          : "High protein (2g/kg bodyweight), complex carbs, healthy fats."}
-                      </p>
-                      <button
-                        className="btn btn-outline-light btn-sm"
-                        onClick={() =>
-                          handleCopy(
-                            plan
-                              ? plan.diet_plan
-                              : "High protein (2g/kg bodyweight), complex carbs, healthy fats."
-                          )
-                        }
-                      >
-                        📋 Copy
-                      </button>
-                    </div>
-                  )}
-                </div>
+            {/* Workout (wide + glass) */}
+            {activeView === "workout" && (
+              <div
+                className="mx-auto p-4 text-white shadow-lg"
+                style={{
+                  maxWidth: "1000px",
+                  width: "100%",
+                  borderRadius: "16px",
+                  background: "rgba(0, 0, 0, 0.55)",
+                  backdropFilter: "blur(12px)",
+                  border: "1px solid rgba(255, 255, 255, 0.2)",
+                  boxShadow: "0 8px 32px rgba(0, 0, 0, 0.4)",
+                }}
+              >
+                <h3 className="mb-3" style={{ color: "#4da6ff", fontWeight: "bold" }}>
+                  💪 Workout Plan
+                </h3>
+                <p style={{ whiteSpace: "pre-line", lineHeight: "1.6" }}>
+                  {plan
+                    ? plan.workout_plan
+                    : "Push/Pull/Legs 6x per week with progressive overload."}
+                </p>
+                <button
+                  className="btn btn-outline-light btn-sm mt-3"
+                  style={{ borderRadius: "8px" }}
+                  onClick={() =>
+                    handleCopy(
+                      plan
+                        ? plan.workout_plan
+                        : "Push/Pull/Legs 6x per week with progressive overload."
+                    )
+                  }
+                >
+                  📋 Copy
+                </button>
               </div>
+            )}
 
-              {/* Attendance Card */}
-              <div className="col-md-4">
-                <div className="card bg-dark text-white shadow rounded-4 p-3 h-100 text-center">
-                  <h5 className="text-warning">📅 Attendance</h5>
-                  <p className="small text-muted">
-                    Mark your daily gym attendance
-                  </p>
-                  <button className="btn btn-warning btn-sm px-4 shadow">
-                    Mark Attendance
-                  </button>
-                </div>
+            {/* Diet (wide + glass) */}
+            {activeView === "diet" && (
+              <div
+                className="mx-auto p-4 text-white shadow-lg"
+                style={{
+                  maxWidth: "1000px",
+                  width: "100%",
+                  borderRadius: "16px",
+                  background: "rgba(0, 0, 0, 0.55)",
+                  backdropFilter: "blur(12px)",
+                  border: "1px solid rgba(255, 255, 255, 0.2)",
+                  boxShadow: "0 8px 32px rgba(0, 0, 0, 0.4)",
+                }}
+              >
+                <h3 className="mb-3" style={{ color: "#20c997", fontWeight: "bold" }}>
+                  🥗 Diet Plan
+                </h3>
+                <p style={{ whiteSpace: "pre-line", lineHeight: "1.6" }}>
+                  {plan
+                    ? plan.diet_plan
+                    : "High protein (2g/kg bodyweight), complex carbs, healthy fats."}
+                </p>
+                <button
+                  className="btn btn-outline-light btn-sm mt-3"
+                  style={{ borderRadius: "8px" }}
+                  onClick={() =>
+                    handleCopy(
+                      plan
+                        ? plan.diet_plan
+                        : "High protein (2g/kg bodyweight), complex carbs, healthy fats."
+                    )
+                  }
+                >
+                  📋 Copy
+                </button>
               </div>
-            </div>
+            )}
+
+            {/* Attendance (wide + glass) with "Soon" */}
+            {activeView === "attendance" && (
+              <div
+                className="mx-auto p-4 text-white shadow-lg text-center"
+                style={{
+                  maxWidth: "1000px",
+                  width: "100%",
+                  borderRadius: "16px",
+                  background: "rgba(0, 0, 0, 0.55)",
+                  backdropFilter: "blur(12px)",
+                  border: "1px solid rgba(255, 255, 255, 0.2)",
+                  boxShadow: "0 8px 32px rgba(0, 0, 0, 0.4)",
+                }}
+              >
+                <div className="d-flex justify-content-center align-items-center gap-2 mb-2">
+                  <h3 className="mb-0" style={{ color: "#ffc107", fontWeight: "bold" }}>
+                    📅 Attendance
+                  </h3>
+                  <span className="badge rounded-pill bg-secondary">Soon</span>
+                </div>
+                <p className="mb-3" style={{ lineHeight: "1.6" }}>
+                  Mark your daily gym attendance here.
+                </p>
+                <button className="btn btn-warning btn-sm px-4 shadow" disabled title="Coming soon">
+                  Mark Attendance
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>
