@@ -25,9 +25,6 @@ session_set_cookie_params([
 ]);
 session_start();
 
-// Debug log (remove in production)
-// error_log("NEW SESSION ID: " . session_id());
-
 // --- DB config ---
 $host = "localhost";
 $user = "root";
@@ -41,17 +38,17 @@ if ($conn->connect_error) {
 
 // --- Get JSON input ---
 $data = json_decode(file_get_contents("php://input"), true);
-$username = $data['username'] ?? '';
+$loginInput = $data['username'] ?? ''; // can be username OR email
 $passwordInput = $data['password'] ?? '';
 
-if (!$username || !$passwordInput) {
-    echo json_encode(["success" => false, "message" => "Username and password are required."]);
+if (!$loginInput || !$passwordInput) {
+    echo json_encode(["success" => false, "message" => "Username/email and password are required."]);
     exit;
 }
 
-// --- Verify user ---
-$stmt = $conn->prepare("SELECT id, password, role FROM users WHERE username = ?");
-$stmt->bind_param("s", $username);
+// --- Verify user (username OR email) ---
+$stmt = $conn->prepare("SELECT id, username, email, password, role FROM users WHERE username = ? OR email = ?");
+$stmt->bind_param("ss", $loginInput, $loginInput);
 $stmt->execute();
 $result = $stmt->get_result();
 
@@ -62,7 +59,7 @@ if ($result->num_rows === 0) {
     if (password_verify($passwordInput, $user['password'])) {
         // ✅ Set session variables
         $_SESSION['user_id'] = $user['id'];
-        $_SESSION['username'] = $username;
+        $_SESSION['username'] = $user['username']; // use actual DB username
         $_SESSION['role'] = $user['role'];
         $_SESSION['last_activity'] = time();
 
@@ -71,7 +68,7 @@ if ($result->num_rows === 0) {
             "message" => "Login successful.",
             "user" => [
                 "id" => $user['id'],
-                "username" => $username,
+                "username" => $user['username'],
                 "role" => $user['role']
             ]
         ]);

@@ -1,6 +1,27 @@
 <?php
+// =============================================
+// generate_plan.php
+// =============================================
+
 // Prevent PHP timeout (0 = unlimited)
 set_time_limit(0);
+
+// Force JSON response
+header("Access-Control-Allow-Origin: http://localhost:3000");
+header("Access-Control-Allow-Credentials: true");
+header("Access-Control-Allow-Methods: POST, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type, Authorization");
+header("Content-Type: application/json");
+
+// Handle preflight request
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit;
+}
+
+// Prevent PHP notices/warnings from polluting JSON
+error_reporting(E_ALL);
+ini_set('display_errors', 0);
 
 /**
  * Ollama API (local inference)
@@ -48,7 +69,12 @@ function call_ollama_api(string $prompt, string $model = "mistral"): array {
     }
 
     if (!$text) {
-        return ["success" => false, "error" => "Unexpected Ollama response", "http_code" => $httpCode, "raw" => $response];
+        return [
+            "success" => false,
+            "error"   => "Unexpected Ollama response",
+            "http_code" => $httpCode,
+            "raw" => $response
+        ];
     }
 
     return ["success" => true, "text" => $text, "http_code" => $httpCode];
@@ -57,6 +83,10 @@ function call_ollama_api(string $prompt, string $model = "mistral"): array {
 function generate_plan($form_id, $level, $conn) {
     // 1) Fetch member form data
     $stmt = $conn->prepare("SELECT * FROM member_forms WHERE id = ?");
+    if (!$stmt) {
+        return ["success" => false, "error" => "DB prepare failed: " . $conn->error];
+    }
+
     $stmt->bind_param("i", $form_id);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -153,22 +183,45 @@ Snacks: ...
         $diet_plan = "(No separate diet section found)";
     }
 
-    // 6) Insert into plans table
-    $stmt2 = $conn->prepare("INSERT INTO plans (member_form_id, workout_plan, diet_plan, approved_by_trainer) VALUES (?, ?, ?, 1)");
-    $stmt2->bind_param("iss", $form_id, $workout_plan, $diet_plan);
-    $ok = $stmt2->execute();
-    $stmt2->close();
-
-    if (!$ok) {
-        return ["success" => false, "error" => "Failed to save plan"];
-    }
-
+    // ✅ Do NOT save yet, just return for trainer review
     return [
         "success" => true,
         "member_form_id" => (int)$form_id,
         "level" => $level,
         "workout_plan" => $workout_plan,
-        "diet_plan" => $diet_plan
+        "diet_plan" => $diet_plan,
+        "message" => "Plan generated. Review and save to confirm."
     ];
+}
+
+/* ===================================================
+   HTTP ENTRY POINT (API for frontend fetch)
+   =================================================== */
+
+try {
+    require_once __DIR__ . "/db.php"; // defines $conn
+
+    // Read JSON input
+    $input = json_decode(file_get_contents("php://input"), true);
+    if (!$input || !isset($input["form_id"])) {
+        echo json_encode(["success" => false, "error" => "Missing form_id"]);
+        exit;
+    }
+
+    $form_id = (int)$input["form_id"];
+    $level   = $input["level"] ?? "beginner";
+
+    // Call generator
+    $result = generate_plan($form_id, $level, $conn);
+
+    // Output JSON
+    echo json_encode($result, JSON_UNESCAPED_UNICODE);
+
+} catch (Throwable $e) {
+    http_response_code(500);
+    echo json_encode([
+        "success" => false,
+        "error"   => "Server exception: " . $e->getMessage()
+    ]);
 }
 ?>
