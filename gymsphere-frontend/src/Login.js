@@ -1,6 +1,7 @@
 // src/Login.js
 import React, { useState } from 'react';
 import LoadingSpinner from './LoadingSpinner';
+import { useNavigate } from 'react-router-dom';
 
 function Login({ onLogin }) {
   const [form, setForm] = useState({
@@ -8,6 +9,8 @@ function Login({ onLogin }) {
     password: '',
   });
   const [loading, setLoading] = useState(false);
+
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -21,15 +24,32 @@ function Login({ onLogin }) {
       const res = await fetch('http://localhost:100/gymsphere-backend/login.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include', // ✅ ensures PHPSESSID cookie is stored and reused
+        credentials: 'include',
         body: JSON.stringify(form),
       });
 
       const data = await res.json();
       alert(data.message);
 
-      if (data.success && onLogin) {
-        onLogin(data.user);
+      if (data.success) {
+        const { role, username, id } = data.user;
+
+        // 🔹 Pass user data up to parent if needed
+        if (onLogin) onLogin(data.user);
+
+        // 🔹 Store session in sessionStorage
+        sessionStorage.setItem('username', username);
+        sessionStorage.setItem('role', role);
+        sessionStorage.setItem('userId', id);
+
+        // 🔹 Redirect by role
+        if (role === 'admin') {
+          navigate('/admin');
+        } else if (role === 'trainer') {
+          navigate('/trainer');
+        } else {
+          navigate('/member');
+        }
       }
     } catch (err) {
       alert('Login failed. Please try again.');

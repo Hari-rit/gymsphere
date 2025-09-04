@@ -5,6 +5,7 @@ import Signup from './Signup';
 import Login from './Login';
 import MemberDashboard from './MemberDashboard.jsx';
 import TrainerDashboard from './TrainerDashboard.jsx';
+import AdminDashboard from './AdminDashboard.jsx'; // ✅ new import
 import LoadingSpinner from './LoadingSpinner';
 import './LoadingSpinner.css';
 import { Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom';
@@ -25,7 +26,7 @@ function App() {
 
     fetch('http://localhost:100/gymsphere-backend/logout.php', {
       method: 'POST',
-      credentials: 'include', // 🔑 ensures cookie is cleared
+      credentials: 'include',
     }).finally(() => {
       setUser(null);
       setView(null);
@@ -48,11 +49,11 @@ function App() {
         .then((res) => res.json())
         .then((data) => {
           if (!data.loggedIn) {
-            handleLogout(); // Session expired
+            handleLogout();
           }
         })
         .catch((err) => console.error('Session check error:', err));
-    }, 60000); // 🔄 60,000 ms = 1 minute
+    }, 60000);
 
     return () => clearInterval(interval);
   }, [handleLogout]);
@@ -65,6 +66,7 @@ function App() {
       if (location.pathname === '/') {
         if (storedUser.role === 'member') navigate('/member');
         else if (storedUser.role === 'trainer') navigate('/trainer');
+        else if (storedUser.role === 'admin') navigate('/admin'); // ✅ added
       }
     }
     setLoading(false);
@@ -79,6 +81,7 @@ function App() {
       setTransitioning(false);
       if (userData.role === 'member') navigate('/member');
       else if (userData.role === 'trainer') navigate('/trainer');
+      else if (userData.role === 'admin') navigate('/admin'); // ✅ added
     }, 1000);
   };
 
@@ -143,7 +146,7 @@ function App() {
               path="/member"
               element={
                 <ProtectedRoute user={user} allowedRole="member">
-                  <MemberDashboard username={user?.username} onLogout={handleLogout} />
+                  <MemberDashboard username={user?.username} userId={user?.id} onLogout={handleLogout} />
                 </ProtectedRoute>
               }
             />
@@ -152,6 +155,14 @@ function App() {
               element={
                 <ProtectedRoute user={user} allowedRole="trainer">
                   <TrainerDashboard username={user?.username} onLogout={handleLogout} />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin" // ✅ new route
+              element={
+                <ProtectedRoute user={user} allowedRole="admin">
+                  <AdminDashboard username={user?.username} onLogout={handleLogout} />
                 </ProtectedRoute>
               }
             />

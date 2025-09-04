@@ -9,7 +9,14 @@ function TrainerDashboard({ username, onLogout }) {
   const [selectedMember, setSelectedMember] = useState(null);
   const [planOptionsFor, setPlanOptionsFor] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [activeView, setActiveView] = useState("dashboard"); // NEW: controls sidebar view
+  const [activeView, setActiveView] = useState("dashboard"); // controls sidebar view
+
+  // ---- NEW: Plan review state ----
+  const [generatedPlan, setGeneratedPlan] = useState(null); // { member_form_id, workout_plan, diet_plan, ... }
+  const [editingWorkout, setEditingWorkout] = useState("");
+  const [editingDiet, setEditingDiet] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [generating, setGenerating] = useState(false);
 
   // Fetch member forms
   const fetchForms = () => {
@@ -60,23 +67,123 @@ function TrainerDashboard({ username, onLogout }) {
       .catch((err) => console.error("Error updating form:", err));
   };
 
-  // Generate Plan
-  const handleGeneratePlan = (userId, level) => {
-    fetch("http://localhost:100/gymsphere-backend/trainer_action.php", {
+  // ---- NEW: Generate Plan (review first, do NOT save) ----
+  const handleGeneratePlan = (formId, level) => {
+    setGenerating(true);
+    fetch("http://localhost:100/gymsphere-backend/generate_plan.php", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
-      body: JSON.stringify({ user_id: userId, action: "generate_plan", level }),
+      body: JSON.stringify({ form_id: formId, level }),
     })
       .then((res) => res.json())
       .then((data) => {
-        alert(data.success ? "✅ Plan generated!" : `❌ Failed: ${data.error || data.message}`);
+        setGenerating(false);
         if (data.success) {
-          fetchForms();
+          setGeneratedPlan(data);
+          setEditingWorkout(data.workout_plan || "");
+          setEditingDiet(data.diet_plan || "");
           setPlanOptionsFor(null);
+        } else {
+          alert(`❌ Failed: ${data.error || data.message}`);
         }
       })
-      .catch((err) => console.error("Error generating plan:", err));
+      .catch((err) => {
+        setGenerating(false);
+        console.error("Error generating plan:", err);
+        alert("❌ Error generating plan. Check console.");
+      });
+  };
+
+  // ---- NEW: Save reviewed plan to DB ----
+  const handleSavePlan = () => {
+    if (!generatedPlan) return;
+    setSaving(true);
+    fetch("http://localhost:100/gymsphere-backend/save_plan.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({
+        user_id: generatedPlan.member_form_id, // ✅ match backend
+        workout_plan: editingWorkout,
+        diet_plan: editingDiet,
+      }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        setSaving(false);
+        if (data.success) {
+          alert("✅ Plan saved!");
+          setGeneratedPlan(null);
+          setEditingWorkout("");
+          setEditingDiet("");
+          fetchForms();
+        } else {
+          alert(`❌ ${data.error || "Failed to save plan"}`);
+        }
+      })
+      .catch((err) => {
+        setSaving(false);
+        console.error("Error saving plan:", err);
+        alert("❌ Error saving plan. Check console.");
+      });
+  };
+
+  // ---- NEW: Update existing plan ----
+  const handleUpdatePlan = (planId) => {
+    setSaving(true);
+    fetch("http://localhost:100/gymsphere-backend/update_plan.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({
+        plan_id: planId,
+        workout_plan: editingWorkout,
+        diet_plan: editingDiet,
+      }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        setSaving(false);
+        if (data.success) {
+          alert("✅ Plan updated!");
+          setGeneratedPlan(null);
+          setEditingWorkout("");
+          setEditingDiet("");
+          fetchForms();
+        } else {
+          alert(`❌ ${data.error || "Failed to update plan"}`);
+        }
+      })
+      .catch((err) => {
+        setSaving(false);
+        console.error("Error updating plan:", err);
+        alert("❌ Error updating plan. Check console.");
+      });
+  };
+
+  // ---- NEW: Delete plan ----
+  const handleDeletePlan = (planId) => {
+    if (!window.confirm("Are you sure you want to delete this plan?")) return;
+    fetch("http://localhost:100/gymsphere-backend/delete_plan.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ plan_id: planId }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          alert("🗑️ Plan deleted!");
+          fetchForms();
+        } else {
+          alert(`❌ ${data.error || "Failed to delete plan"}`);
+        }
+      })
+      .catch((err) => {
+        console.error("Error deleting plan:", err);
+        alert("❌ Error deleting plan. Check console.");
+      });
   };
 
   const countByStatus = (status) => forms.filter((f) => f.status === status).length;
@@ -104,10 +211,7 @@ function TrainerDashboard({ username, onLogout }) {
       {/* ===== Navbar ===== */}
       <nav className="navbar navbar-expand-lg navbar-dark bg-dark fixed-top px-4 shadow-sm">
         <div className="d-flex align-items-center gap-2">
-          <Link
-            className="navbar-brand text-white text-decoration-none d-flex align-items-center gap-2"
-            to="/"
-          >
+          <Link className="navbar-brand text-white text-decoration-none d-flex align-items-center gap-2" to="/">
             <span className="fs-4">🏠</span>
             <span>Home</span>
           </Link>
@@ -116,6 +220,7 @@ function TrainerDashboard({ username, onLogout }) {
 
         <div className="ms-auto d-flex align-items-center gap-3">
           <button
+            type="button"
             className="btn btn-sm btn-outline-light d-flex align-items-center gap-2 rounded-pill"
             style={{ backgroundColor: "rgba(255,255,255,0.1)" }}
             onClick={() => setSidebarOpen(true)}
@@ -132,7 +237,7 @@ function TrainerDashboard({ username, onLogout }) {
             ▾
           </button>
 
-          <button className="btn btn-danger btn-sm" onClick={onLogout}>
+          <button className="btn btn-danger btn-sm" type="button" onClick={onLogout}>
             Logout
           </button>
         </div>
@@ -148,6 +253,7 @@ function TrainerDashboard({ username, onLogout }) {
             <div className="d-flex justify-content-between align-items-center mb-3 p-2 border-bottom">
               <div className="fw-bold">GymSphere</div>
               <button
+                type="button"
                 className="btn btn-sm btn-outline-light"
                 onClick={() => setSidebarOpen(false)}
               >
@@ -157,6 +263,7 @@ function TrainerDashboard({ username, onLogout }) {
             <ul className="list-unstyled px-2">
               <li>
                 <button
+                  type="button"
                   className="btn w-100 text-start text-white"
                   onClick={() => {
                     setActiveView("dashboard");
@@ -168,6 +275,7 @@ function TrainerDashboard({ username, onLogout }) {
               </li>
               <li>
                 <button
+                  type="button"
                   className="btn w-100 text-start text-white"
                   onClick={() => {
                     setActiveView("clients");
@@ -179,6 +287,7 @@ function TrainerDashboard({ username, onLogout }) {
               </li>
               <li>
                 <button
+                  type="button"
                   className="btn w-100 text-start text-white"
                   onClick={() => {
                     setActiveView("requests");
@@ -189,7 +298,7 @@ function TrainerDashboard({ username, onLogout }) {
                 </button>
               </li>
               <li>
-                <button className="btn w-100 text-start text-muted mt-2" disabled>
+                <button type="button" className="btn w-100 text-start text-muted mt-2" disabled>
                   📊 Analytics (Soon)
                 </button>
               </li>
@@ -270,11 +379,7 @@ function TrainerDashboard({ username, onLogout }) {
                     boxShadow: "0 8px 32px rgba(0, 0, 0, 0.4)",
                   }}
                 >
-                  <h5
-                    className="text-info"
-                    role="button"
-                    onClick={() => setSelectedMember(form)}
-                  >
+                  <h5 className="text-info" role="button" onClick={() => setSelectedMember(form)}>
                     👤 {form.username}
                   </h5>
                   <p>🎯 {form.goal}</p>
@@ -299,35 +404,45 @@ function TrainerDashboard({ username, onLogout }) {
                         <p>🎯 Goal: {form.goal}</p>
                         <div className="d-flex gap-2 mt-2">
                           <button
+                            type="button"
                             className="btn btn-outline-light btn-sm"
-                            onClick={() => handleGeneratePlan(form.user_id, "beginner")}
+                            onClick={() => handleGeneratePlan(form.id, "beginner")}
+                            disabled={generating}
                           >
-                            🟢 Beginner Plan
+                            {generating ? "⏳ Generating..." : "🟢 Beginner Plan"}
                           </button>
                           <button
+                            type="button"
                             className="btn btn-outline-warning btn-sm"
-                            onClick={() => handleGeneratePlan(form.user_id, "intermediate")}
+                            onClick={() => handleGeneratePlan(form.id, "intermediate")}
+                            disabled={generating}
                           >
-                            🟡 Intermediate Plan
+                            {generating ? "⏳ Generating..." : "🟡 Intermediate Plan"}
                           </button>
                           <button
+                            type="button"
                             className="btn btn-outline-danger btn-sm"
-                            onClick={() => handleGeneratePlan(form.user_id, "advanced")}
+                            onClick={() => handleGeneratePlan(form.id, "advanced")}
+                            disabled={generating}
                           >
-                            🔴 Advanced Plan
+                            {generating ? "⏳ Generating..." : "🔴 Advanced Plan"}
                           </button>
                         </div>
                         <button
+                          type="button"
                           className="btn btn-sm btn-outline-light mt-2"
                           onClick={() => setPlanOptionsFor(null)}
+                          disabled={generating}
                         >
                           ❌ Cancel
                         </button>
                       </div>
                     ) : (
                       <button
+                        type="button"
                         className="btn btn-primary btn-sm"
                         onClick={() => setPlanOptionsFor(form.user_id)}
+                        disabled={generating}
                       >
                         ⚡ Generate Plan
                       </button>
@@ -378,11 +493,7 @@ function TrainerDashboard({ username, onLogout }) {
                     boxShadow: "0 8px 32px rgba(0, 0, 0, 0.4)",
                   }}
                 >
-                  <h5
-                    className="text-info"
-                    role="button"
-                    onClick={() => setSelectedMember(form)}
-                  >
+                  <h5 className="text-info" role="button" onClick={() => setSelectedMember(form)}>
                     👤 {form.username}
                   </h5>
                   <p>🎯 {form.goal}</p>
@@ -394,9 +505,7 @@ function TrainerDashboard({ username, onLogout }) {
                     Status:{" "}
                     <span
                       className={`badge ${
-                        form.status === "rejected"
-                          ? "bg-danger"
-                          : "bg-warning text-dark"
+                        form.status === "rejected" ? "bg-danger" : "bg-warning text-dark"
                       }`}
                     >
                       {form.status}
@@ -405,6 +514,7 @@ function TrainerDashboard({ username, onLogout }) {
 
                   {form.assigned_trainer_id === null && (
                     <button
+                      type="button"
                       className="btn btn-success btn-sm"
                       onClick={() => handleAccept(form.user_id)}
                     >
@@ -415,17 +525,18 @@ function TrainerDashboard({ username, onLogout }) {
                   {form.assigned_trainer_id !== null && form.status === "pending" && (
                     <div className="d-flex gap-2">
                       <button
+                        type="button"
                         className="btn btn-success btn-sm"
                         onClick={() => handleAction(form.user_id, "approve")}
                       >
                         ✅ Approve
                       </button>
                       <button
+                        type="button"
                         className="btn btn-danger btn-sm"
                         onClick={() => {
                           const comment = prompt("Enter rejection reason:");
-                          if (comment !== null)
-                            handleAction(form.user_id, "reject", comment);
+                          if (comment !== null) handleAction(form.user_id, "reject", comment);
                         }}
                       >
                         ❌ Reject
@@ -447,9 +558,10 @@ function TrainerDashboard({ username, onLogout }) {
               <div className="modal-header">
                 <h5 className="modal-title">Profile: {selectedMember.username}</h5>
                 <button
+                  type="button"
                   className="btn-close"
                   onClick={() => setSelectedMember(null)}
-                ></button>
+                />
               </div>
               <div className="modal-body">
                 <ul className="list-group list-group-flush">
@@ -477,11 +589,102 @@ function TrainerDashboard({ username, onLogout }) {
               </div>
               <div className="modal-footer">
                 <button
+                  type="button"
                   className="btn btn-secondary"
                   onClick={() => setSelectedMember(null)}
                 >
                   Close
                 </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ==== NEW: Plan Review & Edit Modal ==== */}
+      {generatedPlan && (
+        <div className="modal d-block" tabIndex="-1">
+          <div className="modal-dialog modal-lg">
+            <div className="modal-content bg-dark text-white rounded-4">
+              <div className="modal-header">
+                <h5 className="modal-title">Review & Edit Plan</h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={() => {
+                    if (!saving) {
+                      setGeneratedPlan(null);
+                      setEditingWorkout("");
+                      setEditingDiet("");
+                    }
+                  }}
+                />
+              </div>
+              <div className="modal-body">
+                <div className="mb-3">
+                  <label className="form-label">🏋️ Workout Plan</label>
+                  <textarea
+                    className="form-control"
+                    rows={10}
+                    value={editingWorkout}
+                    onChange={(e) => setEditingWorkout(e.target.value)}
+                    style={{ whiteSpace: "pre-wrap" }}
+                  />
+                </div>
+                <div className="mb-3">
+                  <label className="form-label">🥗 Diet Plan</label>
+                  <textarea
+                    className="form-control"
+                    rows={10}
+                    value={editingDiet}
+                    onChange={(e) => setEditingDiet(e.target.value)}
+                    style={{ whiteSpace: "pre-wrap" }}
+                  />
+                </div>
+              </div>
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="btn btn-outline-light"
+                  onClick={() => {
+                    if (!saving) {
+                      setGeneratedPlan(null);
+                      setEditingWorkout("");
+                      setEditingDiet("");
+                    }
+                  }}
+                  disabled={saving}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-success"
+                  onClick={handleSavePlan}
+                  disabled={saving}
+                >
+                  {saving ? "Saving…" : "Save Plan"}
+                </button>
+                {generatedPlan.plan_id && (
+                  <>
+                    <button
+                      type="button"
+                      className="btn btn-warning"
+                      onClick={() => handleUpdatePlan(generatedPlan.plan_id)}
+                      disabled={saving}
+                    >
+                      {saving ? "Updating…" : "Update"}
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-danger"
+                      onClick={() => handleDeletePlan(generatedPlan.plan_id)}
+                      disabled={saving}
+                    >
+                      Delete
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           </div>
