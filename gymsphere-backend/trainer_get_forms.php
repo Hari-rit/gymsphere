@@ -29,14 +29,32 @@ if (!$trainer_id) {
     exit;
 }
 
-// 🔍 SQL Query
-$sql = "SELECT mf.id, mf.user_id, u.username, mf.name, mf.age, mf.height, mf.weight,
-               mf.goal, mf.health_issues, mf.worked_out_before, mf.experience_years,
-               mf.experience_months, mf.status, mf.trainer_comment, mf.created_at,
-               mf.assigned_trainer_id, t.username AS trainer_name
+// 🔍 SQL Query with plan join
+$sql = "SELECT 
+            mf.id AS form_id, 
+            mf.user_id, 
+            u.username, 
+            mf.name, 
+            mf.age, 
+            mf.height, 
+            mf.weight,
+            mf.goal, 
+            mf.health_issues, 
+            mf.worked_out_before, 
+            mf.experience_years,
+            mf.experience_months, 
+            mf.status, 
+            mf.trainer_comment, 
+            mf.created_at,
+            mf.assigned_trainer_id, 
+            t.username AS trainer_name,
+            p.id AS plan_id, 
+            p.workout_plan, 
+            p.diet_plan
         FROM member_forms mf
         JOIN users u ON mf.user_id = u.id
         LEFT JOIN users t ON mf.assigned_trainer_id = t.id
+        LEFT JOIN plans p ON p.member_form_id = mf.id
         WHERE ((mf.assigned_trainer_id IS NULL AND mf.status = 'pending')
                OR (mf.assigned_trainer_id = ?))
         ORDER BY mf.created_at DESC";
