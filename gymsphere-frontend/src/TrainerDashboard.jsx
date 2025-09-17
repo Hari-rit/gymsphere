@@ -1,6 +1,10 @@
 // src/TrainerDashboard.jsx
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import GlassCard from "./GlassCard";
+import PlanModal from "./PlanModal";
+import ClientList from "./ClientList";
+import Navbar from "./Navbar";
+import Sidebar from "./Sidebar";
 
 function TrainerDashboard({ username, onLogout }) {
   const [forms, setForms] = useState([]);
@@ -176,6 +180,11 @@ function TrainerDashboard({ username, onLogout }) {
         if (data.success) {
           alert("🗑️ Plan deleted!");
           fetchForms();
+          if (generatedPlan && generatedPlan.plan_id === planId) {
+            setGeneratedPlan(null);
+            setEditingWorkout("");
+            setEditingDiet("");
+          }
         } else {
           alert(`❌ ${data.error || "Failed to delete plan"}`);
         }
@@ -199,6 +208,14 @@ function TrainerDashboard({ username, onLogout }) {
     return true;
   });
 
+  // Sidebar items for Trainer
+  const sidebarItems = [
+    { key: "dashboard", label: "🏠 Dashboard" },
+    { key: "clients", label: "👥 My Clients" },
+    { key: "requests", label: "📋 Member Requests" },
+    { key: "analytics", label: "📊 Analytics (Soon)", disabled: true },
+  ];
+
   return (
     <div
       className="text-white min-vh-100"
@@ -208,109 +225,17 @@ function TrainerDashboard({ username, onLogout }) {
         backgroundPosition: "center",
       }}
     >
-      {/* ===== Navbar ===== */}
-      <nav className="navbar navbar-expand-lg navbar-dark bg-dark fixed-top px-4 shadow-sm">
-        <div className="d-flex align-items-center gap-2">
-          <Link className="navbar-brand text-white text-decoration-none d-flex align-items-center gap-2" to="/">
-            <span className="fs-4">🏠</span>
-            <span>Home</span>
-          </Link>
-          <span className="badge bg-warning text-dark">Trainer</span>
-        </div>
+      {/* Navbar */}
+      <Navbar username={username} role="Trainer" onLogout={onLogout} onOpenSidebar={() => setSidebarOpen(true)} />
 
-        <div className="ms-auto d-flex align-items-center gap-3">
-          <button
-            type="button"
-            className="btn btn-sm btn-outline-light d-flex align-items-center gap-2 rounded-pill"
-            style={{ backgroundColor: "rgba(255,255,255,0.1)" }}
-            onClick={() => setSidebarOpen(true)}
-          >
-            <div
-              className="rounded-circle bg-warning text-dark d-flex justify-content-center align-items-center"
-              style={{ width: "28px", height: "28px", fontSize: "0.8rem" }}
-            >
-              {username[0]?.toUpperCase()}
-            </div>
-            <span className="text-truncate" style={{ maxWidth: 120 }}>
-              Welcome, {username}
-            </span>
-            ▾
-          </button>
-
-          <button className="btn btn-danger btn-sm" type="button" onClick={onLogout}>
-            Logout
-          </button>
-        </div>
-      </nav>
-
-      {/* ===== Sidebar ===== */}
-      {sidebarOpen && (
-        <>
-          <div
-            className="position-fixed top-0 start-0 h-100 bg-dark text-white shadow"
-            style={{ width: "250px", zIndex: 1050 }}
-          >
-            <div className="d-flex justify-content-between align-items-center mb-3 p-2 border-bottom">
-              <div className="fw-bold">GymSphere</div>
-              <button
-                type="button"
-                className="btn btn-sm btn-outline-light"
-                onClick={() => setSidebarOpen(false)}
-              >
-                ✕
-              </button>
-            </div>
-            <ul className="list-unstyled px-2">
-              <li>
-                <button
-                  type="button"
-                  className="btn w-100 text-start text-white"
-                  onClick={() => {
-                    setActiveView("dashboard");
-                    setSidebarOpen(false);
-                  }}
-                >
-                  🏠 Dashboard
-                </button>
-              </li>
-              <li>
-                <button
-                  type="button"
-                  className="btn w-100 text-start text-white"
-                  onClick={() => {
-                    setActiveView("clients");
-                    setSidebarOpen(false);
-                  }}
-                >
-                  👥 My Clients
-                </button>
-              </li>
-              <li>
-                <button
-                  type="button"
-                  className="btn w-100 text-start text-white"
-                  onClick={() => {
-                    setActiveView("requests");
-                    setSidebarOpen(false);
-                  }}
-                >
-                  📋 Member Requests
-                </button>
-              </li>
-              <li>
-                <button type="button" className="btn w-100 text-start text-muted mt-2" disabled>
-                  📊 Analytics (Soon)
-                </button>
-              </li>
-            </ul>
-          </div>
-          <div
-            className="position-fixed top-0 start-0 w-100 h-100 bg-dark bg-opacity-50"
-            style={{ zIndex: 1040 }}
-            onClick={() => setSidebarOpen(false)}
-          />
-        </>
-      )}
+      {/* Sidebar */}
+      <Sidebar
+        open={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        items={sidebarItems}
+        activeView={activeView}
+        setActiveView={setActiveView}
+      />
 
       {/* ===== Page Content ===== */}
       <div className="container pt-5" style={{ paddingTop: "120px" }}>
@@ -361,97 +286,14 @@ function TrainerDashboard({ username, onLogout }) {
 
         {/* My Clients View */}
         {activeView === "clients" && (
-          <>
-            {approvedForms.length === 0 ? (
-              <p className="text-muted">No approved clients yet.</p>
-            ) : (
-              approvedForms.map((form) => (
-                <div
-                  key={form.id}
-                  className="mx-auto p-4 text-white shadow-lg mb-4"
-                  style={{
-                    maxWidth: "1000px",
-                    width: "100%",
-                    borderRadius: "16px",
-                    background: "rgba(0, 0, 0, 0.55)",
-                    backdropFilter: "blur(12px)",
-                    border: "1px solid rgba(255, 255, 255, 0.2)",
-                    boxShadow: "0 8px 32px rgba(0, 0, 0, 0.4)",
-                  }}
-                >
-                  <h5 className="text-info" role="button" onClick={() => setSelectedMember(form)}>
-                    👤 {form.username}
-                  </h5>
-                  <p>🎯 {form.goal}</p>
-                  <p>🎂 {form.age} years</p>
-                  <p>
-                    ⏳ {form.experience_years}y {form.experience_months}m
-                  </p>
-                  <p>
-                    Status: <span className="badge bg-success">approved</span>
-                  </p>
-                  {form.trainer_name && <p>👨‍🏫 Assigned Trainer: {form.trainer_name}</p>}
-
-                  <div className="mt-2">
-                    {planOptionsFor === form.user_id ? (
-                      <div className="card bg-secondary text-white p-3 mt-2">
-                        <h6>📋 Member Details</h6>
-                        <p>⚖️ Weight: {form.weight} kg</p>
-                        <p>📏 Height: {form.height} cm</p>
-                        <p>
-                          ⏳ Experience: {form.experience_years}y {form.experience_months}m
-                        </p>
-                        <p>🎯 Goal: {form.goal}</p>
-                        <div className="d-flex gap-2 mt-2">
-                          <button
-                            type="button"
-                            className="btn btn-outline-light btn-sm"
-                            onClick={() => handleGeneratePlan(form.id, "beginner")}
-                            disabled={generating}
-                          >
-                            {generating ? "⏳ Generating..." : "🟢 Beginner Plan"}
-                          </button>
-                          <button
-                            type="button"
-                            className="btn btn-outline-warning btn-sm"
-                            onClick={() => handleGeneratePlan(form.id, "intermediate")}
-                            disabled={generating}
-                          >
-                            {generating ? "⏳ Generating..." : "🟡 Intermediate Plan"}
-                          </button>
-                          <button
-                            type="button"
-                            className="btn btn-outline-danger btn-sm"
-                            onClick={() => handleGeneratePlan(form.id, "advanced")}
-                            disabled={generating}
-                          >
-                            {generating ? "⏳ Generating..." : "🔴 Advanced Plan"}
-                          </button>
-                        </div>
-                        <button
-                          type="button"
-                          className="btn btn-sm btn-outline-light mt-2"
-                          onClick={() => setPlanOptionsFor(null)}
-                          disabled={generating}
-                        >
-                          ❌ Cancel
-                        </button>
-                      </div>
-                    ) : (
-                      <button
-                        type="button"
-                        className="btn btn-primary btn-sm"
-                        onClick={() => setPlanOptionsFor(form.user_id)}
-                        disabled={generating}
-                      >
-                        ⚡ Generate Plan
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ))
-            )}
-          </>
+          <ClientList
+            approvedForms={approvedForms}
+            planOptionsFor={planOptionsFor}
+            setPlanOptionsFor={setPlanOptionsFor}
+            generating={generating}
+            handleGeneratePlan={handleGeneratePlan}
+            setSelectedMember={setSelectedMember}
+          />
         )}
 
         {/* Member Requests View */}
@@ -480,19 +322,7 @@ function TrainerDashboard({ username, onLogout }) {
               <p className="text-muted">No member requests found.</p>
             ) : (
               filteredRequests.map((form) => (
-                <div
-                  key={form.id}
-                  className="mx-auto p-4 text-white shadow-lg mb-4"
-                  style={{
-                    maxWidth: "1000px",
-                    width: "100%",
-                    borderRadius: "16px",
-                    background: "rgba(0, 0, 0, 0.55)",
-                    backdropFilter: "blur(12px)",
-                    border: "1px solid rgba(255, 255, 255, 0.2)",
-                    boxShadow: "0 8px 32px rgba(0, 0, 0, 0.4)",
-                  }}
-                >
+                <GlassCard key={form.id}>
                   <h5 className="text-info" role="button" onClick={() => setSelectedMember(form)}>
                     👤 {form.username}
                   </h5>
@@ -543,7 +373,7 @@ function TrainerDashboard({ username, onLogout }) {
                       </button>
                     </div>
                   )}
-                </div>
+                </GlassCard>
               ))
             )}
           </>
@@ -602,94 +432,18 @@ function TrainerDashboard({ username, onLogout }) {
       )}
 
       {/* ==== NEW: Plan Review & Edit Modal ==== */}
-      {generatedPlan && (
-        <div className="modal d-block" tabIndex="-1">
-          <div className="modal-dialog modal-lg">
-            <div className="modal-content bg-dark text-white rounded-4">
-              <div className="modal-header">
-                <h5 className="modal-title">Review & Edit Plan</h5>
-                <button
-                  type="button"
-                  className="btn-close"
-                  onClick={() => {
-                    if (!saving) {
-                      setGeneratedPlan(null);
-                      setEditingWorkout("");
-                      setEditingDiet("");
-                    }
-                  }}
-                />
-              </div>
-              <div className="modal-body">
-                <div className="mb-3">
-                  <label className="form-label">🏋️ Workout Plan</label>
-                  <textarea
-                    className="form-control"
-                    rows={10}
-                    value={editingWorkout}
-                    onChange={(e) => setEditingWorkout(e.target.value)}
-                    style={{ whiteSpace: "pre-wrap" }}
-                  />
-                </div>
-                <div className="mb-3">
-                  <label className="form-label">🥗 Diet Plan</label>
-                  <textarea
-                    className="form-control"
-                    rows={10}
-                    value={editingDiet}
-                    onChange={(e) => setEditingDiet(e.target.value)}
-                    style={{ whiteSpace: "pre-wrap" }}
-                  />
-                </div>
-              </div>
-              <div className="modal-footer">
-                <button
-                  type="button"
-                  className="btn btn-outline-light"
-                  onClick={() => {
-                    if (!saving) {
-                      setGeneratedPlan(null);
-                      setEditingWorkout("");
-                      setEditingDiet("");
-                    }
-                  }}
-                  disabled={saving}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-success"
-                  onClick={handleSavePlan}
-                  disabled={saving}
-                >
-                  {saving ? "Saving…" : "Save Plan"}
-                </button>
-                {generatedPlan.plan_id && (
-                  <>
-                    <button
-                      type="button"
-                      className="btn btn-warning"
-                      onClick={() => handleUpdatePlan(generatedPlan.plan_id)}
-                      disabled={saving}
-                    >
-                      {saving ? "Updating…" : "Update"}
-                    </button>
-                    <button
-                      type="button"
-                      className="btn btn-danger"
-                      onClick={() => handleDeletePlan(generatedPlan.plan_id)}
-                      disabled={saving}
-                    >
-                      Delete
-                    </button>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <PlanModal
+        generatedPlan={generatedPlan}
+        editingWorkout={editingWorkout}
+        editingDiet={editingDiet}
+        saving={saving}
+        setGeneratedPlan={setGeneratedPlan}
+        setEditingWorkout={setEditingWorkout}
+        setEditingDiet={setEditingDiet}
+        handleSavePlan={handleSavePlan}
+        handleUpdatePlan={handleUpdatePlan}
+        handleDeletePlan={handleDeletePlan}
+      />
     </div>
   );
 }
