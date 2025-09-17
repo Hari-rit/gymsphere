@@ -2,24 +2,21 @@
 import React from "react";
 import { Link } from "react-router-dom";
 
-function Navbar({ role, username, onLogout, onOpenSidebar }) {
+function Navbar({ role = "member", username = "", onLogout, onOpenSidebar }) {
+  const roleLower = String(role).toLowerCase();
   const roleBadge =
-    role === "admin"
+    roleLower === "admin"
       ? "bg-danger"
-      : role === "trainer"
+      : roleLower === "trainer"
       ? "bg-warning text-dark"
       : "bg-success";
 
-  const roleLabel =
-    role === "admin" ? "Admin" : role === "trainer" ? "Trainer" : "Member";
+  const roleLabel = roleLower === "admin" ? "Admin" : roleLower === "trainer" ? "Trainer" : "Member";
 
   return (
     <nav className="navbar navbar-expand-lg navbar-dark bg-dark fixed-top px-4 shadow-sm">
       <div className="d-flex align-items-center gap-2">
-        <Link
-          className="navbar-brand text-white text-decoration-none d-flex align-items-center gap-2"
-          to="/"
-        >
+        <Link className="navbar-brand text-white text-decoration-none d-flex align-items-center gap-2" to="/">
           <span className="fs-4">🏠</span>
           <span>Home</span>
         </Link>
@@ -33,16 +30,10 @@ function Navbar({ role, username, onLogout, onOpenSidebar }) {
           onClick={onOpenSidebar}
         >
           <div
-            className={`rounded-circle ${
-              role === "trainer"
-                ? "bg-warning text-dark"
-                : role === "admin"
-                ? "bg-danger text-white"
-                : "bg-primary text-white"
-            } d-flex justify-content-center align-items-center`}
+            className={`rounded-circle ${roleLower === "trainer" ? "bg-warning text-dark" : roleLower === "admin" ? "bg-danger text-white" : "bg-primary text-white"} d-flex justify-content-center align-items-center`}
             style={{ width: "28px", height: "28px", fontSize: "0.8rem" }}
           >
-            {username?.[0]?.toUpperCase()}
+            {username?.[0]?.toUpperCase() ?? "U"}
           </div>
           <span className="text-truncate" style={{ maxWidth: 120 }}>
             Welcome, {username}

@@ -15,12 +15,16 @@ function PlanModal({
 }) {
   if (!generatedPlan) return null;
 
+  const isExistingPlan = !!generatedPlan.plan_id;
+
   return (
     <div className="modal d-block" tabIndex="-1">
       <div className="modal-dialog modal-lg">
         <div className="modal-content bg-dark text-white rounded-4">
           <div className="modal-header">
-            <h5 className="modal-title">Review & Edit Plan</h5>
+            <h5 className="modal-title">
+              {isExistingPlan ? "View / Update Plan" : "Review & Save Plan"}
+            </h5>
             <button
               type="button"
               className="btn-close"
@@ -68,17 +72,23 @@ function PlanModal({
               }}
               disabled={saving}
             >
-              Cancel
+              Close
             </button>
-            <button
-              type="button"
-              className="btn btn-success"
-              onClick={handleSavePlan}
-              disabled={saving}
-            >
-              {saving ? "Saving…" : "Save Plan"}
-            </button>
-            {generatedPlan.plan_id && (
+
+            {/* First-time plan (INSERT) */}
+            {!isExistingPlan && (
+              <button
+                type="button"
+                className="btn btn-success"
+                onClick={handleSavePlan}
+                disabled={saving}
+              >
+                {saving ? "Saving…" : "Save Plan"}
+              </button>
+            )}
+
+            {/* Existing plan (UPDATE / DELETE) */}
+            {isExistingPlan && (
               <>
                 <button
                   type="button"
@@ -86,7 +96,7 @@ function PlanModal({
                   onClick={() => handleUpdatePlan(generatedPlan.plan_id)}
                   disabled={saving}
                 >
-                  {saving ? "Updating…" : "Update"}
+                  {saving ? "Updating…" : "Update Plan"}
                 </button>
                 <button
                   type="button"
@@ -94,7 +104,7 @@ function PlanModal({
                   onClick={() => handleDeletePlan(generatedPlan.plan_id)}
                   disabled={saving}
                 >
-                  Delete
+                  Delete Plan
                 </button>
               </>
             )}

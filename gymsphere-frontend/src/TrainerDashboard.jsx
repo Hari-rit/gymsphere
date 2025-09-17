@@ -293,6 +293,10 @@ function TrainerDashboard({ username, onLogout }) {
             generating={generating}
             handleGeneratePlan={handleGeneratePlan}
             setSelectedMember={setSelectedMember}
+            setGeneratedPlan={setGeneratedPlan}       // NEW
+            setEditingWorkout={setEditingWorkout}     // NEW
+            setEditingDiet={setEditingDiet}           // NEW
+            handleDeletePlan={handleDeletePlan}
           />
         )}
 

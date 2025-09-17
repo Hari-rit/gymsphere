@@ -38,6 +38,9 @@ function MemberDashboard({ username, userId, onLogout }) {
           setSubmitted(true);
           setStatus(data.form.status);
         }
+      })
+      .catch((e) => {
+        console.error("get_member_form error:", e);
       });
 
     fetch("http://localhost:100/gymsphere-backend/get_plan.php", {
@@ -51,6 +54,9 @@ function MemberDashboard({ username, userId, onLogout }) {
           setStatus("approved");
           setPlan(data.plan);
         }
+      })
+      .catch((e) => {
+        console.error("get_plan error:", e);
       });
   }, []);
 
@@ -59,31 +65,25 @@ function MemberDashboard({ username, userId, onLogout }) {
     alert("Copied to clipboard!");
   };
 
+  // Sidebar items (use `key` for active highlighting)
+  const sidebarItems = [
+    { key: "dashboard", label: "🏠 Dashboard", onClick: () => setActiveView("dashboard") },
+    { key: "workout", label: "💪 Workout Plan", onClick: () => setActiveView("workout") },
+    { key: "diet", label: "🥗 Diet Plan", onClick: () => setActiveView("diet") },
+    { key: "attendance", label: "📅 Attendance", onClick: () => setActiveView("attendance") },
+    { key: "progress", label: "📊 Progress (Soon)", onClick: () => {}, disabled: true },
+  ];
+
   return (
-    <div className="text-white min-vh-100"
-         style={{ backgroundImage: "url('/background.jpg')", backgroundSize: "cover", backgroundPosition: "center" }}>
-      <Navbar
-        role="member"
-        username={username}
-        onLogout={onLogout}
-        onOpenSidebar={() => setSidebarOpen(true)}
-      />
+    <div
+      className="text-white min-vh-100"
+      style={{ backgroundImage: "url('/background.jpg')", backgroundSize: "cover", backgroundPosition: "center" }}
+    >
+      <Navbar role="member" username={username} onLogout={onLogout} onOpenSidebar={() => setSidebarOpen(true)} />
 
-      <Sidebar
-        title="GymSphere"
-        open={sidebarOpen}
-        onClose={() => setSidebarOpen(false)}
-        menuItems={[
-          { label: "🏠 Dashboard", onClick: () => setActiveView("dashboard") },
-          { label: "💪 Workout Plan", onClick: () => setActiveView("workout") },
-          { label: "🥗 Diet Plan", onClick: () => setActiveView("diet") },
-          { label: "📅 Attendance", onClick: () => setActiveView("attendance") },
-          { label: "📊 Progress (Soon)", onClick: () => {}, disabled: true },
-        ]}
-      />
+      <Sidebar title="GymSphere" open={sidebarOpen} onClose={() => setSidebarOpen(false)} items={sidebarItems} activeView={activeView} setActiveView={setActiveView} />
 
-      <div className="d-flex justify-content-center align-items-start py-5"
-           style={{ paddingTop: "120px" }}>
+      <div className="d-flex justify-content-center align-items-start py-5" style={{ paddingTop: "120px" }}>
         {!submitted && (
           <FitnessForm memberData={memberData} setMemberData={setMemberData} setSubmitted={setSubmitted} setStatus={setStatus} />
         )}
@@ -106,13 +106,9 @@ function MemberDashboard({ username, userId, onLogout }) {
           <div className="container mt-3">
             {activeView === "dashboard" && (
               <header className="mb-4 d-flex justify-content-center">
-                <div className="rounded-4 shadow"
-                     style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "saturate(140%) blur(2px)",
-                              padding: "18px 24px", maxWidth: 920, width: "100%", textAlign: "center" }}>
+                <div className="rounded-4 shadow" style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "saturate(140%) blur(2px)", padding: "18px 24px", maxWidth: 920, width: "100%", textAlign: "center" }}>
                   <h1 className="mb-2" style={{ letterSpacing: "1px" }}>WELCOME BACK 👋</h1>
-                  <p className="mb-0" style={{ color: "rgba(255,255,255,0.85)" }}>
-                    Use the sidebar to access your workout, diet, and attendance.
-                  </p>
+                  <p className="mb-0" style={{ color: "rgba(255,255,255,0.85)" }}>Use the sidebar to access your workout, diet, and attendance.</p>
                 </div>
               </header>
             )}

@@ -1,7 +1,16 @@
 // src/Sidebar.jsx
 import React from "react";
 
-function Sidebar({ title, open, onClose, menuItems }) {
+/*
+  Sidebar props:
+  - title (string) - optional
+  - open (bool) - whether sidebar is visible
+  - onClose (fn) - close handler
+  - items (array) - list of { key?, label, onClick?, disabled? }
+  - activeView (string) - optional, current view key for highlighting
+  - setActiveView (fn) - optional, will be used if item.onClick isn't provided and item.key exists
+*/
+function Sidebar({ title = "GymSphere", open, onClose, items = [], activeView, setActiveView }) {
   if (!open) return null;
 
   return (
@@ -12,34 +21,43 @@ function Sidebar({ title, open, onClose, menuItems }) {
       >
         <div className="d-flex justify-content-between align-items-center mb-3 p-2 border-bottom">
           <div className="fw-bold">{title}</div>
-          <button
-            className="btn btn-sm btn-outline-light"
-            onClick={onClose}
-          >
+          <button className="btn btn-sm btn-outline-light" onClick={onClose}>
             ✕
           </button>
         </div>
+
         <ul className="list-unstyled px-2">
-          {menuItems.map((item, idx) => (
-            <li key={idx}>
-              <button
-                className={`btn w-100 text-start ${
-                  item.disabled ? "text-muted" : "text-white"
-                }`}
-                onClick={() => {
-                  if (!item.disabled) {
-                    item.onClick();
-                    onClose();
-                  }
-                }}
-                disabled={item.disabled}
-              >
-                {item.label}
-              </button>
-            </li>
-          ))}
+          {items.map((item, idx) => {
+            const isDisabled = !!item.disabled;
+            const key = item.key ?? idx;
+            const isActive = activeView && item.key && activeView === item.key;
+
+            const handleClick = () => {
+              if (isDisabled) return;
+              if (typeof item.onClick === "function") {
+                item.onClick();
+              } else if (typeof setActiveView === "function" && item.key) {
+                setActiveView(item.key);
+              }
+              if (typeof onClose === "function") onClose();
+            };
+
+            return (
+              <li key={key}>
+                <button
+                  className={`btn w-100 text-start ${isDisabled ? "text-muted" : "text-white"} ${isActive ? "fw-bold" : ""}`}
+                  onClick={handleClick}
+                  disabled={isDisabled}
+                  type="button"
+                >
+                  {item.label}
+                </button>
+              </li>
+            );
+          })}
         </ul>
       </div>
+
       <div
         className="position-fixed top-0 start-0 w-100 h-100 bg-dark bg-opacity-50"
         style={{ zIndex: 1040 }}
