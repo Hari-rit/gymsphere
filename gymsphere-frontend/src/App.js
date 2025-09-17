@@ -5,7 +5,7 @@ import Signup from './Signup';
 import Login from './Login';
 import MemberDashboard from './MemberDashboard.jsx';
 import TrainerDashboard from './TrainerDashboard.jsx';
-import AdminDashboard from './AdminDashboard.jsx'; // ✅ new import
+import AdminDashboard from './AdminDashboard.jsx'; 
 import LoadingSpinner from './LoadingSpinner';
 import './LoadingSpinner.css';
 import { Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom';
@@ -107,9 +107,9 @@ function App() {
               element={
                 <div className="container mt-5 text-center">
                   <img
-                    src="/logo192.png"
+                    src="/gs_logo.png"
                     alt="GymSphere Logo"
-                    style={{ height: '60px', marginBottom: '10px' }}
+                    style={{ height: '220px', width:'250px',marginBottom: '10px' }}
                   />
                   <h1 className="mb-3 heading-font text-white">WELCOME TO GYMSPHERE</h1>
                   <p className="lead text-white">Your AI-powered gym ecosystem starts here.</p>
