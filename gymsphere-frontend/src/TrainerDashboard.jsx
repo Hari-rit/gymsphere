@@ -1,4 +1,3 @@
-// src/TrainerDashboard.jsx
 import React, { useState, useEffect } from "react";
 import GlassCard from "./GlassCard";
 import PlanModal from "./PlanModal";
@@ -8,21 +7,21 @@ import Sidebar from "./Sidebar";
 
 function TrainerDashboard({ username, onLogout }) {
   const [forms, setForms] = useState([]);
+  const [attendance, setAttendance] = useState({});
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [selectedMember, setSelectedMember] = useState(null);
   const [planOptionsFor, setPlanOptionsFor] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [activeView, setActiveView] = useState("dashboard"); // controls sidebar view
+  const [activeView, setActiveView] = useState("dashboard");
 
-  // ---- NEW: Plan review state ----
-  const [generatedPlan, setGeneratedPlan] = useState(null); // { member_form_id, workout_plan, diet_plan, ... }
+  const [generatedPlan, setGeneratedPlan] = useState(null);
   const [editingWorkout, setEditingWorkout] = useState("");
   const [editingDiet, setEditingDiet] = useState("");
   const [saving, setSaving] = useState(false);
   const [generating, setGenerating] = useState(false);
 
-  // Fetch member forms
+  // Fetch member forms + attendance
   const fetchForms = () => {
     fetch("http://localhost:100/gymsphere-backend/trainer_get_forms.php", {
       method: "GET",
@@ -33,13 +32,23 @@ function TrainerDashboard({ username, onLogout }) {
         if (data.success) setForms(data.forms);
       })
       .catch((err) => console.error("Error fetching forms:", err));
+
+    fetch("http://localhost:100/gymsphere-backend/get_attendance.php", {
+      method: "GET",
+      credentials: "include",
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) setAttendance(data.attendance || {});
+      })
+      .catch((err) => console.error("Error fetching attendance:", err));
   };
 
   useEffect(() => {
     fetchForms();
   }, []);
 
-  // Accept Student
+  // Accept student
   const handleAccept = (userId) => {
     fetch("http://localhost:100/gymsphere-backend/trainer_accept.php", {
       method: "POST",
@@ -71,7 +80,7 @@ function TrainerDashboard({ username, onLogout }) {
       .catch((err) => console.error("Error updating form:", err));
   };
 
-  // ---- NEW: Generate Plan (review first, do NOT save) ----
+  // Generate plan
   const handleGeneratePlan = (formId, level) => {
     setGenerating(true);
     fetch("http://localhost:100/gymsphere-backend/generate_plan.php", {
@@ -89,17 +98,17 @@ function TrainerDashboard({ username, onLogout }) {
           setEditingDiet(data.diet_plan || "");
           setPlanOptionsFor(null);
         } else {
-          alert(`❌ Failed: ${data.error || data.message}`);
+          alert(`Failed: ${data.error || data.message}`);
         }
       })
       .catch((err) => {
         setGenerating(false);
         console.error("Error generating plan:", err);
-        alert("❌ Error generating plan. Check console.");
+        alert("Error generating plan. Check console.");
       });
   };
 
-  // ---- NEW: Save reviewed plan to DB ----
+  // Save plan
   const handleSavePlan = () => {
     if (!generatedPlan) return;
     setSaving(true);
@@ -108,7 +117,7 @@ function TrainerDashboard({ username, onLogout }) {
       headers: { "Content-Type": "application/json" },
       credentials: "include",
       body: JSON.stringify({
-        user_id: generatedPlan.member_form_id, // ✅ match backend
+        user_id: generatedPlan.member_form_id,
         workout_plan: editingWorkout,
         diet_plan: editingDiet,
       }),
@@ -117,23 +126,23 @@ function TrainerDashboard({ username, onLogout }) {
       .then((data) => {
         setSaving(false);
         if (data.success) {
-          alert("✅ Plan saved!");
+          alert("Plan saved!");
           setGeneratedPlan(null);
           setEditingWorkout("");
           setEditingDiet("");
           fetchForms();
         } else {
-          alert(`❌ ${data.error || "Failed to save plan"}`);
+          alert(`Failed: ${data.error || "Failed to save plan"}`);
         }
       })
       .catch((err) => {
         setSaving(false);
         console.error("Error saving plan:", err);
-        alert("❌ Error saving plan. Check console.");
+        alert("Error saving plan. Check console.");
       });
   };
 
-  // ---- NEW: Update existing plan ----
+  // Update plan
   const handleUpdatePlan = (planId) => {
     setSaving(true);
     fetch("http://localhost:100/gymsphere-backend/update_plan.php", {
@@ -150,23 +159,23 @@ function TrainerDashboard({ username, onLogout }) {
       .then((data) => {
         setSaving(false);
         if (data.success) {
-          alert("✅ Plan updated!");
+          alert("Plan updated!");
           setGeneratedPlan(null);
           setEditingWorkout("");
           setEditingDiet("");
           fetchForms();
         } else {
-          alert(`❌ ${data.error || "Failed to update plan"}`);
+          alert(`Failed: ${data.error || "Failed to update plan"}`);
         }
       })
       .catch((err) => {
         setSaving(false);
         console.error("Error updating plan:", err);
-        alert("❌ Error updating plan. Check console.");
+        alert("Error updating plan. Check console.");
       });
   };
 
-  // ---- NEW: Delete plan ----
+  // Delete plan
   const handleDeletePlan = (planId) => {
     if (!window.confirm("Are you sure you want to delete this plan?")) return;
     fetch("http://localhost:100/gymsphere-backend/delete_plan.php", {
@@ -178,7 +187,7 @@ function TrainerDashboard({ username, onLogout }) {
       .then((res) => res.json())
       .then((data) => {
         if (data.success) {
-          alert("🗑️ Plan deleted!");
+          alert("Plan deleted!");
           fetchForms();
           if (generatedPlan && generatedPlan.plan_id === planId) {
             setGeneratedPlan(null);
@@ -186,34 +195,47 @@ function TrainerDashboard({ username, onLogout }) {
             setEditingDiet("");
           }
         } else {
-          alert(`❌ ${data.error || "Failed to delete plan"}`);
+          alert(`Failed: ${data.error || "Failed to delete plan"}`);
         }
       })
       .catch((err) => {
         console.error("Error deleting plan:", err);
-        alert("❌ Error deleting plan. Check console.");
+        alert("Error deleting plan. Check console.");
       });
+  };
+
+  // Mark attendance
+  const handleAttendance = (memberId, status) => {
+    fetch("http://localhost:100/gymsphere-backend/mark_attendance.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ member_id: memberId, status }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        alert(data.message);
+        if (data.success) fetchForms();
+      })
+      .catch((err) => console.error("Error marking attendance:", err));
   };
 
   const countByStatus = (status) => forms.filter((f) => f.status === status).length;
 
-  // Separate views
   const approvedForms = forms.filter((f) => f.status === "approved");
   const requestForms = forms.filter((f) => f.status === "pending" || f.status === "rejected");
 
-  // Apply filter + search only in Member Requests
   const filteredRequests = requestForms.filter((f) => {
     if (filter !== "all" && f.status !== filter) return false;
     if (search && !f.username.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
   });
 
-  // Sidebar items for Trainer
   const sidebarItems = [
-    { key: "dashboard", label: "🏠 Dashboard" },
-    { key: "clients", label: "👥 My Clients" },
-    { key: "requests", label: "📋 Member Requests" },
-    { key: "analytics", label: "📊 Analytics (Soon)", disabled: true },
+    { key: "dashboard", label: "Dashboard" },
+    { key: "clients", label: "My Clients" },
+    { key: "requests", label: "Member Requests" },
+    { key: "analytics", label: "Analytics (Soon)", disabled: true },
   ];
 
   return (
@@ -225,10 +247,8 @@ function TrainerDashboard({ username, onLogout }) {
         backgroundPosition: "center",
       }}
     >
-      {/* Navbar */}
       <Navbar username={username} role="Trainer" onLogout={onLogout} onOpenSidebar={() => setSidebarOpen(true)} />
 
-      {/* Sidebar */}
       <Sidebar
         open={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
@@ -237,9 +257,7 @@ function TrainerDashboard({ username, onLogout }) {
         setActiveView={setActiveView}
       />
 
-      {/* ===== Page Content ===== */}
-      <div className="container pt-5" style={{ paddingTop: "120px" }}>
-        {/* Dashboard View */}
+      <div className="container-fluid pt-5" style={{ paddingTop: "120px" }}>
         {activeView === "dashboard" && (
           <>
             <header className="mb-4 d-flex justify-content-center">
@@ -255,55 +273,57 @@ function TrainerDashboard({ username, onLogout }) {
                 }}
               >
                 <h1 className="mb-2" style={{ letterSpacing: "1px" }}>
-                  WELCOME TRAINER 👋
+                  Welcome Trainer
                 </h1>
                 <p className="mb-0" style={{ color: "rgba(255,255,255,0.85)" }}>
-                  Manage members, accept students, and create plans.
+                  Manage members, accept students, create plans, and mark attendance.
                 </p>
               </div>
             </header>
 
-            <div className="row text-center my-4">
+            <div className="row text-center my-4 g-4">
               <div className="col">
-                <h6>🕒 Pending</h6>
-                <p className="fw-bold">{countByStatus("pending")}</p>
+                <h6>Pending</h6>
+                <p className="fw-bold text-warning">{countByStatus("pending")}</p>
               </div>
               <div className="col">
-                <h6>✅ Approved</h6>
-                <p className="fw-bold">{countByStatus("approved")}</p>
+                <h6>Approved</h6>
+                <p className="fw-bold text-success">{countByStatus("approved")}</p>
               </div>
               <div className="col">
-                <h6>❌ Rejected</h6>
-                <p className="fw-bold">{countByStatus("rejected")}</p>
+                <h6>Rejected</h6>
+                <p className="fw-bold text-danger">{countByStatus("rejected")}</p>
               </div>
               <div className="col">
-                <h6>👥 Total</h6>
-                <p className="fw-bold">{forms.length}</p>
+                <h6>Total</h6>
+                <p className="fw-bold text-info">{forms.length}</p>
               </div>
             </div>
           </>
         )}
 
-        {/* My Clients View */}
         {activeView === "clients" && (
-          <ClientList
-            approvedForms={approvedForms}
-            planOptionsFor={planOptionsFor}
-            setPlanOptionsFor={setPlanOptionsFor}
-            generating={generating}
-            handleGeneratePlan={handleGeneratePlan}
-            setSelectedMember={setSelectedMember}
-            setGeneratedPlan={setGeneratedPlan}       // NEW
-            setEditingWorkout={setEditingWorkout}     // NEW
-            setEditingDiet={setEditingDiet}           // NEW
-            handleDeletePlan={handleDeletePlan}
-          />
+          <div className="d-flex flex-column align-items-center gap-4">
+            <ClientList
+              approvedForms={approvedForms}
+              planOptionsFor={planOptionsFor}
+              setPlanOptionsFor={setPlanOptionsFor}
+              generating={generating}
+              handleGeneratePlan={handleGeneratePlan}
+              setSelectedMember={setSelectedMember}
+              setGeneratedPlan={setGeneratedPlan}
+              setEditingWorkout={setEditingWorkout}
+              setEditingDiet={setEditingDiet}
+              handleDeletePlan={handleDeletePlan}
+              handleAttendance={handleAttendance}
+              attendance={attendance}
+            />
+          </div>
         )}
 
-        {/* Member Requests View */}
         {activeView === "requests" && (
           <>
-            <div className="d-flex gap-3 mb-4">
+            <div className="d-flex gap-3 mb-4 flex-wrap">
               <select
                 className="form-select w-auto"
                 value={filter}
@@ -322,69 +342,72 @@ function TrainerDashboard({ username, onLogout }) {
               />
             </div>
 
-            {filteredRequests.length === 0 ? (
-              <p className="text-muted">No member requests found.</p>
-            ) : (
-              filteredRequests.map((form) => (
-                <GlassCard key={form.id}>
-                  <h5 className="text-info" role="button" onClick={() => setSelectedMember(form)}>
-                    👤 {form.username}
-                  </h5>
-                  <p>🎯 {form.goal}</p>
-                  <p>🎂 {form.age} years</p>
-                  <p>
-                    ⏳ {form.experience_years}y {form.experience_months}m
-                  </p>
-                  <p>
-                    Status:{" "}
-                    <span
-                      className={`badge ${
-                        form.status === "rejected" ? "bg-danger" : "bg-warning text-dark"
-                      }`}
-                    >
-                      {form.status}
-                    </span>
-                  </p>
+            <div className="d-flex flex-column align-items-center gap-4">
+              {filteredRequests.length === 0 ? (
+                <p className="text-muted">No member requests found.</p>
+              ) : (
+                filteredRequests.map((form) => (
+                  <div key={form.id} style={{ width: "100%", maxWidth: "600px" }}>
+                    <GlassCard>
+                      <h5 className="text-info" role="button" onClick={() => setSelectedMember(form)}>
+                        {form.username}
+                      </h5>
+                      <p>Goal: {form.goal}</p>
+                      <p>Age: {form.age} years</p>
+                      <p>
+                        Experience: {form.experience_years}y {form.experience_months}m
+                      </p>
+                      <p>
+                        Status:{" "}
+                        <span
+                          className={`badge ${
+                            form.status === "rejected" ? "bg-danger" : "bg-warning text-dark"
+                          }`}
+                        >
+                          {form.status}
+                        </span>
+                      </p>
 
-                  {form.assigned_trainer_id === null && (
-                    <button
-                      type="button"
-                      className="btn btn-success btn-sm"
-                      onClick={() => handleAccept(form.user_id)}
-                    >
-                      🤝 Accept Student
-                    </button>
-                  )}
+                      {form.assigned_trainer_id === null && (
+                        <button
+                          type="button"
+                          className="btn btn-success btn-sm"
+                          onClick={() => handleAccept(form.user_id)}
+                        >
+                          Accept Student
+                        </button>
+                      )}
 
-                  {form.assigned_trainer_id !== null && form.status === "pending" && (
-                    <div className="d-flex gap-2">
-                      <button
-                        type="button"
-                        className="btn btn-success btn-sm"
-                        onClick={() => handleAction(form.user_id, "approve")}
-                      >
-                        ✅ Approve
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn-danger btn-sm"
-                        onClick={() => {
-                          const comment = prompt("Enter rejection reason:");
-                          if (comment !== null) handleAction(form.user_id, "reject", comment);
-                        }}
-                      >
-                        ❌ Reject
-                      </button>
-                    </div>
-                  )}
-                </GlassCard>
-              ))
-            )}
+                      {form.assigned_trainer_id !== null && form.status === "pending" && (
+                        <div className="d-flex gap-2">
+                          <button
+                            type="button"
+                            className="btn btn-success btn-sm"
+                            onClick={() => handleAction(form.user_id, "approve")}
+                          >
+                            Approve
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn-danger btn-sm"
+                            onClick={() => {
+                              const comment = prompt("Enter rejection reason:");
+                              if (comment !== null) handleAction(form.user_id, "reject", comment);
+                            }}
+                          >
+                            Reject
+                          </button>
+                        </div>
+                      )}
+                    </GlassCard>
+                  </div>
+                ))
+              )}
+            </div>
           </>
         )}
       </div>
 
-      {/* Member Profile Modal */}
       {selectedMember && (
         <div className="modal d-block" tabIndex="-1">
           <div className="modal-dialog">
@@ -400,23 +423,23 @@ function TrainerDashboard({ username, onLogout }) {
               <div className="modal-body">
                 <ul className="list-group list-group-flush">
                   <li className="list-group-item bg-dark text-white">
-                    👤 Name: {selectedMember.name}
+                    Name: {selectedMember.name}
                   </li>
                   <li className="list-group-item bg-dark text-white">
-                    🎯 Goal: {selectedMember.goal}
+                    Goal: {selectedMember.goal}
                   </li>
                   <li className="list-group-item bg-dark text-white">
-                    🎂 Age: {selectedMember.age}
+                    Age: {selectedMember.age}
                   </li>
                   <li className="list-group-item bg-dark text-white">
-                    💊 Health Issues: {selectedMember.health_issues || "None"}
+                    Health Issues: {selectedMember.health_issues || "None"}
                   </li>
                   <li className="list-group-item bg-dark text-white">
-                    📌 Status: {selectedMember.status}
+                    Status: {selectedMember.status}
                   </li>
                   {selectedMember.trainer_name && (
                     <li className="list-group-item bg-dark text-white">
-                      👨‍🏫 Assigned Trainer: {selectedMember.trainer_name}
+                      Assigned Trainer: {selectedMember.trainer_name}
                     </li>
                   )}
                 </ul>
@@ -435,7 +458,6 @@ function TrainerDashboard({ username, onLogout }) {
         </div>
       )}
 
-      {/* ==== NEW: Plan Review & Edit Modal ==== */}
       <PlanModal
         generatedPlan={generatedPlan}
         editingWorkout={editingWorkout}

@@ -61,7 +61,7 @@ function AdminDashboard({ username, onLogout }) {
         title="GymSphere Admin"
         open={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
-        menuItems={[
+        items={[
           { label: "🏠 Dashboard", onClick: () => setActiveView("dashboard") },
           { label: "👥 Manage Users", onClick: () => setActiveView("users") },
           { label: "🏋️ Trainers", onClick: () => setActiveView("trainers") },
