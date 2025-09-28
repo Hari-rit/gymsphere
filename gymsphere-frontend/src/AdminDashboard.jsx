@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import UsersTable from "./UsersTable";
 import Navbar from "./Navbar";
 import Sidebar from "./Sidebar";
+import AdminReports from "./AdminReports"; // ✅ Import reports
 
 function AdminDashboard({ username, onLogout }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -13,7 +14,7 @@ function AdminDashboard({ username, onLogout }) {
   const [err, setErr] = useState("");
 
   useEffect(() => {
-    if (activeView === "dashboard") return;
+    if (activeView === "dashboard" || activeView === "reports") return; // ✅ Don't fetch when on reports
     setLoading(true);
     setErr("");
 
@@ -66,7 +67,7 @@ function AdminDashboard({ username, onLogout }) {
           { label: "👥 Manage Users", onClick: () => setActiveView("users") },
           { label: "🏋️ Trainers", onClick: () => setActiveView("trainers") },
           { label: "💪 Members", onClick: () => setActiveView("members") },
-          { label: "📊 Reports (Soon)", onClick: () => {}, disabled: true },
+          { label: "📊 Reports", onClick: () => setActiveView("reports") }, // ✅ Reports tab
         ]}
       />
 
@@ -83,32 +84,63 @@ function AdminDashboard({ username, onLogout }) {
           >
             <h1 className="mb-3"> Welcome Admin </h1>
             <p style={{ color: "rgba(255,255,255,0.8)" }}>
-              Use the sidebar to manage users, trainers, and members.
+              Use the sidebar to manage users, trainers, members, and reports.
             </p>
           </div>
         )}
 
         {activeView === "users" && (
-          <div className="mx-auto mt-3 p-4 shadow-lg rounded-4 text-white"
-               style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(12px)", maxWidth: "1000px" }}>
+          <div
+            className="mx-auto mt-3 p-4 shadow-lg rounded-4 text-white"
+            style={{
+              background: "rgba(0,0,0,0.55)",
+              backdropFilter: "blur(12px)",
+              maxWidth: "1000px",
+            }}
+          >
             <h3 className="text-info mb-3">👥 All Users</h3>
             <UsersTable list={users} loading={loading} err={err} />
           </div>
         )}
 
         {activeView === "trainers" && (
-          <div className="mx-auto mt-3 p-4 shadow-lg rounded-4 text-white"
-               style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(12px)", maxWidth: "1000px" }}>
+          <div
+            className="mx-auto mt-3 p-4 shadow-lg rounded-4 text-white"
+            style={{
+              background: "rgba(0,0,0,0.55)",
+              backdropFilter: "blur(12px)",
+              maxWidth: "1000px",
+            }}
+          >
             <h3 className="text-warning mb-3">🏋️ Trainers</h3>
             <UsersTable list={trainers} loading={loading} err={err} />
           </div>
         )}
 
         {activeView === "members" && (
-          <div className="mx-auto mt-3 p-4 shadow-lg rounded-4 text-white"
-               style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(12px)", maxWidth: "1000px" }}>
+          <div
+            className="mx-auto mt-3 p-4 shadow-lg rounded-4 text-white"
+            style={{
+              background: "rgba(0,0,0,0.55)",
+              backdropFilter: "blur(12px)",
+              maxWidth: "1000px",
+            }}
+          >
             <h3 className="text-success mb-3">💪 Members</h3>
             <UsersTable list={members} loading={loading} err={err} />
+          </div>
+        )}
+
+        {activeView === "reports" && (
+          <div
+            className="mx-auto mt-3 p-4 shadow-lg rounded-4 text-white"
+            style={{
+              background: "rgba(0,0,0,0.55)",
+              backdropFilter: "blur(12px)",
+              maxWidth: "1100px",
+            }}
+          >
+            <AdminReports /> {/* ✅ Integrated reports view */}
           </div>
         )}
       </div>

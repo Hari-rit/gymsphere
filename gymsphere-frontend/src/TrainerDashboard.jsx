@@ -5,7 +5,8 @@ import PlanModal from "./PlanModal";
 import ClientList from "./ClientList";
 import Navbar from "./Navbar";
 import Sidebar from "./Sidebar";
-import TrainerAttendanceList from "./TrainerAttendanceList"; // ✅ updated import
+import TrainerAttendanceList from "./TrainerAttendanceList"; // ✅ Attendance View
+import TrainerReports from "./TrainerReports"; // ✅ New Reports Component
 
 function TrainerDashboard({ username, onLogout }) {
   const [forms, setForms] = useState([]);
@@ -61,7 +62,9 @@ function TrainerDashboard({ username, onLogout }) {
       .then((res) => res.json())
       .then((data) => {
         alert(data.message);
-        if (data.success) fetchForms();
+        if (data.success) {
+          fetchForms();
+        }
       })
       .catch((err) => console.error("Error accepting student:", err));
   };
@@ -81,7 +84,9 @@ function TrainerDashboard({ username, onLogout }) {
       .then((res) => res.json())
       .then((data) => {
         alert(data.message);
-        if (data.success) fetchForms();
+        if (data.success) {
+          fetchForms();
+        }
       })
       .catch((err) => console.error("Error updating form:", err));
   };
@@ -221,7 +226,9 @@ function TrainerDashboard({ username, onLogout }) {
       .then((res) => res.json())
       .then((data) => {
         alert(data.message);
-        if (data.success) fetchForms();
+        if (data.success) {
+          fetchForms();
+        }
       })
       .catch((err) => console.error("Error marking attendance:", err));
   };
@@ -245,7 +252,8 @@ function TrainerDashboard({ username, onLogout }) {
     { key: "dashboard", label: "Dashboard" },
     { key: "clients", label: "My Clients" },
     { key: "requests", label: "Member Requests" },
-    { key: "attendance", label: "Attendance" }, // ✅ new tab
+    { key: "attendance", label: "Attendance" },
+    { key: "reports", label: "Reports" }, // ✅ now uses separate component
     { key: "analytics", label: "Analytics (Soon)", disabled: true },
   ];
 
@@ -274,6 +282,7 @@ function TrainerDashboard({ username, onLogout }) {
       />
 
       <div className="container-fluid pt-5" style={{ paddingTop: "120px" }}>
+        {/* DASHBOARD */}
         {activeView === "dashboard" && (
           <>
             <header className="mb-4 d-flex justify-content-center">
@@ -292,12 +301,13 @@ function TrainerDashboard({ username, onLogout }) {
                   Welcome Trainer
                 </h1>
                 <p className="mb-0" style={{ color: "rgba(255,255,255,0.85)" }}>
-                  Manage members, accept students, create plans, and mark
+                  Manage members, accept students, create plans, and track
                   attendance.
                 </p>
               </div>
             </header>
 
+            {/* Old Status Summary */}
             <div className="row text-center my-4 g-4">
               <div className="col">
                 <h6>Pending</h6>
@@ -325,6 +335,10 @@ function TrainerDashboard({ username, onLogout }) {
           </>
         )}
 
+        {/* REPORTS TAB */}
+        {activeView === "reports" && <TrainerReports />}
+
+        {/* CLIENTS */}
         {activeView === "clients" && (
           <div className="d-flex flex-column align-items-center gap-4">
             <ClientList
@@ -344,6 +358,7 @@ function TrainerDashboard({ username, onLogout }) {
           </div>
         )}
 
+        {/* REQUESTS */}
         {activeView === "requests" && (
           <>
             <div className="d-flex gap-3 mb-4 flex-wrap">
@@ -450,6 +465,7 @@ function TrainerDashboard({ username, onLogout }) {
           </>
         )}
 
+        {/* ATTENDANCE TAB */}
         {activeView === "attendance" && (
           <div className="d-flex flex-column align-items-center gap-4">
             <TrainerAttendanceList /> {/* ✅ Attendance View integration */}
@@ -457,6 +473,7 @@ function TrainerDashboard({ username, onLogout }) {
         )}
       </div>
 
+      {/* MODAL */}
       {selectedMember && (
         <div className="modal d-block" tabIndex="-1">
           <div className="modal-dialog">
@@ -483,8 +500,7 @@ function TrainerDashboard({ username, onLogout }) {
                     Age: {selectedMember.age}
                   </li>
                   <li className="list-group-item bg-dark text-white">
-                    Health Issues:{" "}
-                    {selectedMember.health_issues || "None"}
+                    Health Issues: {selectedMember.health_issues || "None"}
                   </li>
                   <li className="list-group-item bg-dark text-white">
                     Status: {selectedMember.status}
@@ -510,6 +526,7 @@ function TrainerDashboard({ username, onLogout }) {
         </div>
       )}
 
+      {/* PLAN MODAL */}
       <PlanModal
         generatedPlan={generatedPlan}
         editingWorkout={editingWorkout}

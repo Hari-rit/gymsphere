@@ -4,8 +4,8 @@ import Navbar from "./Navbar";
 import Sidebar from "./Sidebar";
 import WorkoutView from "./WorkoutView";
 import DietView from "./DietView";
-import AttendanceView from "./AttendanceView";
 import FitnessForm from "./FitnessForm";
+import MemberAttendanceCalendar from "./MemberAttendanceCalendar"; // ✅ NEW
 
 function MemberDashboard({ username, userId, onLogout }) {
   const [submitted, setSubmitted] = useState(false);
@@ -175,7 +175,7 @@ function MemberDashboard({ username, userId, onLogout }) {
 
             {activeView === "workout" && <WorkoutView plan={plan} handleCopy={handleCopy} />}
             {activeView === "diet" && <DietView plan={plan} handleCopy={handleCopy} />}
-            {activeView === "attendance" && <AttendanceView />}
+            {activeView === "attendance" && <MemberAttendanceCalendar />} {/* ✅ swapped here */}
           </div>
         )}
       </div>
