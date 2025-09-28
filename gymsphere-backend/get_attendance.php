@@ -13,20 +13,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 include 'db.php';
 
-if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'trainer') {
+if (!isset($_SESSION['user_id']) || !isset($_SESSION['role'])) {
     echo json_encode(['success' => false, 'message' => 'Unauthorized']);
     exit;
 }
 
-$trainer_id = $_SESSION['user_id'];
+$user_id = $_SESSION['user_id'];
+$role = $_SESSION['role'];
 
-// 🔹 If member_id is passed, return calendar-style data
-if (isset($_GET['member_id'])) {
-    $member_id = intval($_GET['member_id']);
-
+/* --------------------------------------------------
+   MEMBER → can only view their own attendance
+-------------------------------------------------- */
+if ($role === 'member') {
     // Get member's join date
     $stmt = $conn->prepare("SELECT created_at FROM users WHERE id = ?");
-    $stmt->bind_param("i", $member_id);
+    $stmt->bind_param("i", $user_id);
     $stmt->execute();
     $joinRes = $stmt->get_result()->fetch_assoc();
     $join_date = $joinRes ? $joinRes['created_at'] : null;
@@ -39,7 +40,7 @@ if (isset($_GET['member_id'])) {
         WHERE user_id = ?
         ORDER BY date ASC
     ");
-    $stmt->bind_param("i", $member_id);
+    $stmt->bind_param("i", $user_id);
     $stmt->execute();
     $result = $stmt->get_result();
 
@@ -56,20 +57,66 @@ if (isset($_GET['member_id'])) {
     exit;
 }
 
-// 🔹 Otherwise return list of members under trainer
-$stmt = $conn->prepare("
-    SELECT DISTINCT u.id, u.username
-    FROM users u
-    INNER JOIN member_forms mf ON u.id = mf.user_id
-    WHERE mf.assigned_trainer_id = ?
-");
-$stmt->bind_param("i", $trainer_id);
-$stmt->execute();
-$result = $stmt->get_result();
+/* --------------------------------------------------
+   TRAINER → existing logic
+-------------------------------------------------- */
+if ($role === 'trainer') {
+    $trainer_id = $user_id;
 
-$members = [];
-while ($row = $result->fetch_assoc()) {
-    $members[] = $row;
+    // If trainer asks for a specific member
+    if (isset($_GET['member_id'])) {
+        $member_id = intval($_GET['member_id']);
+
+        // Get member's join date
+        $stmt = $conn->prepare("SELECT created_at FROM users WHERE id = ?");
+        $stmt->bind_param("i", $member_id);
+        $stmt->execute();
+        $joinRes = $stmt->get_result()->fetch_assoc();
+        $join_date = $joinRes ? $joinRes['created_at'] : null;
+        $stmt->close();
+
+        // Get attendance
+        $stmt = $conn->prepare("
+            SELECT date, status
+            FROM attendance
+            WHERE user_id = ?
+            ORDER BY date ASC
+        ");
+        $stmt->bind_param("i", $member_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        $attendance = [];
+        while ($row = $result->fetch_assoc()) {
+            $attendance[$row['date']] = $row['status'];
+        }
+
+        echo json_encode([
+            'success' => true,
+            'attendance' => $attendance,
+            'join_date' => $join_date
+        ]);
+        exit;
+    }
+
+    // Otherwise, list all members assigned to trainer
+    $stmt = $conn->prepare("
+        SELECT DISTINCT u.id, u.username
+        FROM users u
+        INNER JOIN member_forms mf ON u.id = mf.user_id
+        WHERE mf.assigned_trainer_id = ?
+    ");
+    $stmt->bind_param("i", $trainer_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    $members = [];
+    while ($row = $result->fetch_assoc()) {
+        $members[] = $row;
+    }
+
+    echo json_encode(['success' => true, 'members' => $members]);
+    exit;
 }
 
-echo json_encode(['success' => true, 'members' => $members]);
+echo json_encode(['success' => false, 'message' => 'Unauthorized role']);
