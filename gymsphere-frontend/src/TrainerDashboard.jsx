@@ -1,9 +1,11 @@
+// src/TrainerDashboard.jsx
 import React, { useState, useEffect } from "react";
 import GlassCard from "./GlassCard";
 import PlanModal from "./PlanModal";
 import ClientList from "./ClientList";
 import Navbar from "./Navbar";
 import Sidebar from "./Sidebar";
+import TrainerAttendanceList from "./TrainerAttendanceList"; // ✅ updated import
 
 function TrainerDashboard({ username, onLogout }) {
   const [forms, setForms] = useState([]);
@@ -70,7 +72,11 @@ function TrainerDashboard({ username, onLogout }) {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
-      body: JSON.stringify({ user_id: userId, action, trainer_comment: trainerComment }),
+      body: JSON.stringify({
+        user_id: userId,
+        action,
+        trainer_comment: trainerComment,
+      }),
     })
       .then((res) => res.json())
       .then((data) => {
@@ -220,14 +226,18 @@ function TrainerDashboard({ username, onLogout }) {
       .catch((err) => console.error("Error marking attendance:", err));
   };
 
-  const countByStatus = (status) => forms.filter((f) => f.status === status).length;
+  const countByStatus = (status) =>
+    forms.filter((f) => f.status === status).length;
 
   const approvedForms = forms.filter((f) => f.status === "approved");
-  const requestForms = forms.filter((f) => f.status === "pending" || f.status === "rejected");
+  const requestForms = forms.filter(
+    (f) => f.status === "pending" || f.status === "rejected"
+  );
 
   const filteredRequests = requestForms.filter((f) => {
     if (filter !== "all" && f.status !== filter) return false;
-    if (search && !f.username.toLowerCase().includes(search.toLowerCase())) return false;
+    if (search && !f.username.toLowerCase().includes(search.toLowerCase()))
+      return false;
     return true;
   });
 
@@ -235,6 +245,7 @@ function TrainerDashboard({ username, onLogout }) {
     { key: "dashboard", label: "Dashboard" },
     { key: "clients", label: "My Clients" },
     { key: "requests", label: "Member Requests" },
+    { key: "attendance", label: "Attendance" }, // ✅ new tab
     { key: "analytics", label: "Analytics (Soon)", disabled: true },
   ];
 
@@ -247,7 +258,12 @@ function TrainerDashboard({ username, onLogout }) {
         backgroundPosition: "center",
       }}
     >
-      <Navbar username={username} role="Trainer" onLogout={onLogout} onOpenSidebar={() => setSidebarOpen(true)} />
+      <Navbar
+        username={username}
+        role="Trainer"
+        onLogout={onLogout}
+        onOpenSidebar={() => setSidebarOpen(true)}
+      />
 
       <Sidebar
         open={sidebarOpen}
@@ -276,7 +292,8 @@ function TrainerDashboard({ username, onLogout }) {
                   Welcome Trainer
                 </h1>
                 <p className="mb-0" style={{ color: "rgba(255,255,255,0.85)" }}>
-                  Manage members, accept students, create plans, and mark attendance.
+                  Manage members, accept students, create plans, and mark
+                  attendance.
                 </p>
               </div>
             </header>
@@ -284,15 +301,21 @@ function TrainerDashboard({ username, onLogout }) {
             <div className="row text-center my-4 g-4">
               <div className="col">
                 <h6>Pending</h6>
-                <p className="fw-bold text-warning">{countByStatus("pending")}</p>
+                <p className="fw-bold text-warning">
+                  {countByStatus("pending")}
+                </p>
               </div>
               <div className="col">
                 <h6>Approved</h6>
-                <p className="fw-bold text-success">{countByStatus("approved")}</p>
+                <p className="fw-bold text-success">
+                  {countByStatus("approved")}
+                </p>
               </div>
               <div className="col">
                 <h6>Rejected</h6>
-                <p className="fw-bold text-danger">{countByStatus("rejected")}</p>
+                <p className="fw-bold text-danger">
+                  {countByStatus("rejected")}
+                </p>
               </div>
               <div className="col">
                 <h6>Total</h6>
@@ -347,21 +370,31 @@ function TrainerDashboard({ username, onLogout }) {
                 <p className="text-muted">No member requests found.</p>
               ) : (
                 filteredRequests.map((form) => (
-                  <div key={form.id} style={{ width: "100%", maxWidth: "600px" }}>
+                  <div
+                    key={form.id}
+                    style={{ width: "100%", maxWidth: "600px" }}
+                  >
                     <GlassCard>
-                      <h5 className="text-info" role="button" onClick={() => setSelectedMember(form)}>
+                      <h5
+                        className="text-info"
+                        role="button"
+                        onClick={() => setSelectedMember(form)}
+                      >
                         {form.username}
                       </h5>
                       <p>Goal: {form.goal}</p>
                       <p>Age: {form.age} years</p>
                       <p>
-                        Experience: {form.experience_years}y {form.experience_months}m
+                        Experience: {form.experience_years}y{" "}
+                        {form.experience_months}m
                       </p>
                       <p>
                         Status:{" "}
                         <span
                           className={`badge ${
-                            form.status === "rejected" ? "bg-danger" : "bg-warning text-dark"
+                            form.status === "rejected"
+                              ? "bg-danger"
+                              : "bg-warning text-dark"
                           }`}
                         >
                           {form.status}
@@ -378,33 +411,49 @@ function TrainerDashboard({ username, onLogout }) {
                         </button>
                       )}
 
-                      {form.assigned_trainer_id !== null && form.status === "pending" && (
-                        <div className="d-flex gap-2">
-                          <button
-                            type="button"
-                            className="btn btn-success btn-sm"
-                            onClick={() => handleAction(form.user_id, "approve")}
-                          >
-                            Approve
-                          </button>
-                          <button
-                            type="button"
-                            className="btn btn-danger btn-sm"
-                            onClick={() => {
-                              const comment = prompt("Enter rejection reason:");
-                              if (comment !== null) handleAction(form.user_id, "reject", comment);
-                            }}
-                          >
-                            Reject
-                          </button>
-                        </div>
-                      )}
+                      {form.assigned_trainer_id !== null &&
+                        form.status === "pending" && (
+                          <div className="d-flex gap-2">
+                            <button
+                              type="button"
+                              className="btn btn-success btn-sm"
+                              onClick={() =>
+                                handleAction(form.user_id, "approve")
+                              }
+                            >
+                              Approve
+                            </button>
+                            <button
+                              type="button"
+                              className="btn btn-danger btn-sm"
+                              onClick={() => {
+                                const comment = prompt(
+                                  "Enter rejection reason:"
+                                );
+                                if (comment !== null)
+                                  handleAction(
+                                    form.user_id,
+                                    "reject",
+                                    comment
+                                  );
+                              }}
+                            >
+                              Reject
+                            </button>
+                          </div>
+                        )}
                     </GlassCard>
                   </div>
                 ))
               )}
             </div>
           </>
+        )}
+
+        {activeView === "attendance" && (
+          <div className="d-flex flex-column align-items-center gap-4">
+            <TrainerAttendanceList /> {/* ✅ Attendance View integration */}
+          </div>
         )}
       </div>
 
@@ -413,7 +462,9 @@ function TrainerDashboard({ username, onLogout }) {
           <div className="modal-dialog">
             <div className="modal-content bg-dark text-white rounded-4">
               <div className="modal-header">
-                <h5 className="modal-title">Profile: {selectedMember.username}</h5>
+                <h5 className="modal-title">
+                  Profile: {selectedMember.username}
+                </h5>
                 <button
                   type="button"
                   className="btn-close"
@@ -432,7 +483,8 @@ function TrainerDashboard({ username, onLogout }) {
                     Age: {selectedMember.age}
                   </li>
                   <li className="list-group-item bg-dark text-white">
-                    Health Issues: {selectedMember.health_issues || "None"}
+                    Health Issues:{" "}
+                    {selectedMember.health_issues || "None"}
                   </li>
                   <li className="list-group-item bg-dark text-white">
                     Status: {selectedMember.status}
