@@ -5,7 +5,7 @@ import Sidebar from "./Sidebar";
 import WorkoutView from "./WorkoutView";
 import DietView from "./DietView";
 import FitnessForm from "./FitnessForm";
-import MemberAttendanceCalendar from "./MemberAttendanceCalendar"; // ✅ NEW
+import MemberAttendanceCalendar from "./MemberAttendanceCalendar";
 
 function MemberDashboard({ username, userId, onLogout }) {
   const [submitted, setSubmitted] = useState(false);
@@ -27,19 +27,16 @@ function MemberDashboard({ username, userId, onLogout }) {
 
   const [plan, setPlan] = useState(null);
 
-  // ✅ handle input changes
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setMemberData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // ✅ handle slider changes
   const handleSliderChange = (e) => {
     const { name, value } = e.target;
     setMemberData((prev) => ({ ...prev, [name]: Number(value) }));
   };
 
-  // ✅ handle form submit
   const handleSubmit = (e) => {
     e.preventDefault();
 
@@ -75,9 +72,7 @@ function MemberDashboard({ username, userId, onLogout }) {
           setStatus(data.form.status);
         }
       })
-      .catch((e) => {
-        console.error("get_member_form error:", e);
-      });
+      .catch((e) => console.error("get_member_form error:", e));
 
     fetch("http://localhost:100/gymsphere-backend/get_plan.php", {
       method: "GET",
@@ -91,9 +86,7 @@ function MemberDashboard({ username, userId, onLogout }) {
           setPlan(data.plan);
         }
       })
-      .catch((e) => {
-        console.error("get_plan error:", e);
-      });
+      .catch((e) => console.error("get_plan error:", e));
   }, []);
 
   const handleCopy = (text) => {
@@ -101,7 +94,6 @@ function MemberDashboard({ username, userId, onLogout }) {
     alert("Copied to clipboard!");
   };
 
-  // Sidebar items
   const sidebarItems = [
     { key: "dashboard", label: "🏠 Dashboard", onClick: () => setActiveView("dashboard") },
     { key: "workout", label: "💪 Workout Plan", onClick: () => setActiveView("workout") },
@@ -113,7 +105,11 @@ function MemberDashboard({ username, userId, onLogout }) {
   return (
     <div
       className="text-white min-vh-100"
-      style={{ backgroundImage: "url('/background.jpg')", backgroundSize: "cover", backgroundPosition: "center" }}
+      style={{
+        backgroundImage: "url('/background.jpg')",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+      }}
     >
       <Navbar role="member" username={username} onLogout={onLogout} onOpenSidebar={() => setSidebarOpen(true)} />
 
@@ -126,7 +122,11 @@ function MemberDashboard({ username, userId, onLogout }) {
         setActiveView={setActiveView}
       />
 
-      <div className="d-flex justify-content-center align-items-start py-5" style={{ paddingTop: "120px" }}>
+      <div
+        className="d-flex justify-content-center align-items-start py-5"
+        style={{ paddingTop: "120px" }}
+      >
+        {/* If no form yet → show form */}
         {!submitted && (
           <FitnessForm
             memberData={memberData}
@@ -136,20 +136,43 @@ function MemberDashboard({ username, userId, onLogout }) {
           />
         )}
 
+        {/* Pending status */}
         {submitted && status === "pending" && (
           <div className="text-center mt-5">
             <div className="spinner-border text-light mb-3" role="status"></div>
-            <p className="lead text-secondary">⏳ Waiting for trainer to review your details...</p>
+            <p className="lead text-secondary">
+              ⏳ Waiting for trainer to review your details...
+            </p>
           </div>
         )}
 
+        {/* Rejected → show form again (reason will be in Notifications, not here) */}
         {submitted && status === "rejected" && (
-          <div className="text-center mt-5">
-            <div className="spinner-border text-warning mb-3" role="status"></div>
-            <p className="lead text-warning">⚠️ Trainer is preparing a personalized plan for you, please wait.</p>
+          <div className="mt-5 w-100 d-flex justify-content-center">
+            <div
+              className="card shadow-lg p-4 rounded-4"
+              style={{
+                background: "rgba(0,0,0,0.65)",
+                maxWidth: "600px",
+                width: "100%",
+              }}
+            >
+              <h4 className="text-warning mb-3">⚠️ Your form was rejected</h4>
+              <p className="text-secondary mb-4">
+                Please check your <strong>Notifications</strong> for the reason,
+                then correct your details and resubmit:
+              </p>
+              <FitnessForm
+                memberData={memberData}
+                handleInputChange={handleInputChange}
+                handleSliderChange={handleSliderChange}
+                handleSubmit={handleSubmit}
+              />
+            </div>
           </div>
         )}
 
+        {/* Approved view */}
         {submitted && status === "approved" && (
           <div className="container mt-3">
             {activeView === "dashboard" && (
@@ -165,7 +188,9 @@ function MemberDashboard({ username, userId, onLogout }) {
                     textAlign: "center",
                   }}
                 >
-                  <h1 className="mb-2" style={{ letterSpacing: "1px" }}>WELCOME BACK 👋</h1>
+                  <h1 className="mb-2" style={{ letterSpacing: "1px" }}>
+                    WELCOME BACK 👋
+                  </h1>
                   <p className="mb-0" style={{ color: "rgba(255,255,255,0.85)" }}>
                     Use the sidebar to access your workout, diet, and attendance.
                   </p>
@@ -175,7 +200,7 @@ function MemberDashboard({ username, userId, onLogout }) {
 
             {activeView === "workout" && <WorkoutView plan={plan} handleCopy={handleCopy} />}
             {activeView === "diet" && <DietView plan={plan} handleCopy={handleCopy} />}
-            {activeView === "attendance" && <MemberAttendanceCalendar />} {/* ✅ swapped here */}
+            {activeView === "attendance" && <MemberAttendanceCalendar />}
           </div>
         )}
       </div>
