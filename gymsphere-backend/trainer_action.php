@@ -1,14 +1,13 @@
 <?php
 session_start();
 
-// 🔹 CORS Headers
+// 🔹 CORS / headers
 header("Access-Control-Allow-Origin: http://localhost:3000");
 header("Access-Control-Allow-Credentials: true");
 header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization");
 header("Content-Type: application/json");
 
-// 🔹 Handle preflight (OPTIONS request)
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit;
@@ -16,13 +15,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 include 'db.php';
 
-// ✅ Only trainers can access
+// ✅ Only trainers can access this endpoint
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'trainer') {
     echo json_encode(['success' => false, 'message' => 'Unauthorized']);
     exit;
 }
 
-$trainer_id = $_SESSION['user_id'];
+$trainer_id = (int)$_SESSION['user_id'];
 $data = json_decode(file_get_contents("php://input"), true);
 
 if (!isset($data['user_id']) || !isset($data['action'])) {
@@ -32,9 +31,9 @@ if (!isset($data['user_id']) || !isset($data['action'])) {
 
 $user_id = (int)$data['user_id'];
 $action = $data['action'];
-$trainer_comment = $data['trainer_comment'] ?? '';
+$trainer_comment = trim($data['trainer_comment'] ?? '');
 
-// Handle approve/reject
+// --- Approve / Reject ---
 if ($action === 'approve' || $action === 'reject') {
     $status = $action === 'approve' ? 'approved' : 'rejected';
 
@@ -48,7 +47,7 @@ if ($action === 'approve' || $action === 'reject') {
     if (!$stmt) {
         echo json_encode([
             'success' => false,
-            'message' => '❌ SQL Prepare failed: ' . $conn->error
+            'message' => 'SQL Prepare failed: ' . $conn->error
         ]);
         exit;
     }
@@ -59,25 +58,51 @@ if ($action === 'approve' || $action === 'reject') {
     if (!$execSuccess) {
         echo json_encode([
             'success' => false,
-            'message' => '❌ SQL Execution failed: ' . $stmt->error
+            'message' => 'SQL Execution failed: ' . $stmt->error
         ]);
         exit;
     }
 
     if ($stmt->affected_rows > 0) {
-        echo json_encode(['success' => true, 'message' => "✅ Student $status successfully"]);
+        // 🔔 On rejection: insert notification for the member
+        if ($action === 'reject') {
+            $message = "Your trainer rejected your membership request";
+            if ($trainer_comment !== '') {
+                $message .= ": " . $trainer_comment;
+            } else {
+                $message .= ".";
+            }
+
+            $notifStmt = $conn->prepare("
+                INSERT INTO notifications (user_id, type, message, is_read)
+                VALUES (?, ?, ?, 0)
+            ");
+            if ($notifStmt) {
+                $type = "trainer";
+                $notifStmt->bind_param("iss", $user_id, $type, $message);
+                $notifStmt->execute();
+                $notifStmt->close();
+            } else {
+                error_log("Notifications insert failed: " . $conn->error);
+            }
+        }
+
+        echo json_encode(['success' => true, 'message' => "Student $status successfully"]);
     } else {
         echo json_encode([
             'success' => false,
-            'message' => '⚠️ Action not allowed (maybe already updated or belongs to another trainer)'
+            'message' => 'Action not allowed (maybe already updated or belongs to another trainer)'
         ]);
     }
 
-// 🔹 Handle generate_plan (new)
-} elseif ($action === 'generate_plan') {
+    $stmt->close();
+    exit;
+}
+
+// --- Generate Plan ---
+elseif ($action === 'generate_plan') {
     $level = strtolower($data['level'] ?? 'beginner');
 
-    // Get the form_id for this user (only if assigned to this trainer and approved)
     $formStmt = $conn->prepare("
         SELECT id, status FROM member_forms 
         WHERE user_id = ? AND assigned_trainer_id = ? LIMIT 1
@@ -101,9 +126,12 @@ if ($action === 'approve' || $action === 'reject') {
     $result = generate_plan($formRow['id'], $level, $conn);
 
     echo json_encode($result);
+    exit;
+}
 
-// Invalid action
-} else {
+// --- Invalid Action ---
+else {
     echo json_encode(['success' => false, 'message' => 'Invalid action']);
+    exit;
 }
 ?>
