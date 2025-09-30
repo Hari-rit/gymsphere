@@ -1,6 +1,6 @@
 <?php
 // --- CORS headers ---
-header("Access-Control-Allow-Origin: http://localhost:3000"); // React frontend origin
+header("Access-Control-Allow-Origin: http://localhost:3000"); 
 header("Access-Control-Allow-Credentials: true");
 header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
@@ -13,7 +13,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 // --- Session setup ---
-$timeout_duration = 1800; // 🔄 30 minutes
+$timeout_duration = 1800; 
 ini_set('session.gc_maxlifetime', $timeout_duration);
 session_set_cookie_params([
     'lifetime' => $timeout_duration,
@@ -29,13 +29,12 @@ include 'db.php';
 
 // --- Only logged-in trainers can approve/reject ---
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'trainer') {
-    // clear cookie if unauthorized
     setcookie(session_name(), '', time() - 3600, '/');
     echo json_encode(['success' => false, 'message' => 'Unauthorized']);
     exit;
 }
 
-// --- Get JSON input from React ---
+// --- Get JSON input ---
 $data = json_decode(file_get_contents('php://input'), true);
 
 if (!isset($data['form_id']) || !isset($data['action'])) {
@@ -44,7 +43,7 @@ if (!isset($data['form_id']) || !isset($data['action'])) {
 }
 
 $form_id = (int)$data['form_id'];
-$action = $data['action']; // 'approve' or 'reject'
+$action = $data['action']; 
 $trainer_comment = $data['trainer_comment'] ?? '';
 
 // --- Validate action ---
@@ -53,21 +52,42 @@ if (!in_array($action, ['approve', 'reject'])) {
     exit;
 }
 
-// --- Update member_forms table ---
-$status = $action === 'approve' ? 'approved' : 'rejected';
+if ($action === 'approve') {
+    // ✅ Approve and generate plan
+    $stmt = $conn->prepare("UPDATE member_forms SET status = 'approved', trainer_comment = ? WHERE id = ?");
+    $stmt->bind_param("si", $trainer_comment, $form_id);
 
-$stmt = $conn->prepare("UPDATE member_forms SET status = ?, trainer_comment = ? WHERE id = ?");
-$stmt->bind_param("ssi", $status, $trainer_comment, $form_id);
-
-if ($stmt->execute()) {
-    // If approved, trigger AI plan generation (placeholder)
-    if ($action === 'approve') {
+    if ($stmt->execute()) {
         include 'generate_plan.php';
-        generate_plan($form_id, $conn); // function will handle AI plan creation
+        generate_plan($form_id, $conn); 
+        echo json_encode(['success' => true, 'message' => "Form approved successfully"]);
+    } else {
+        echo json_encode(['success' => false, 'message' => 'Database error: ' . $conn->error]);
     }
+    $stmt->close();
 
-    echo json_encode(['success' => true, 'message' => "Form $status successfully"]);
-} else {
-    echo json_encode(['success' => false, 'message' => 'Database error: ' . $conn->error]);
+} elseif ($action === 'reject') {
+    // ❌ Reject → Delete form + any linked plans
+    $conn->begin_transaction();
+    try {
+        // Delete plans linked to this form
+        $stmt1 = $conn->prepare("DELETE FROM plans WHERE member_form_id = ?");
+        $stmt1->bind_param("i", $form_id);
+        $stmt1->execute();
+        $stmt1->close();
+
+        // Delete the form itself
+        $stmt2 = $conn->prepare("DELETE FROM member_forms WHERE id = ?");
+        $stmt2->bind_param("i", $form_id);
+        $stmt2->execute();
+        $stmt2->close();
+
+        $conn->commit();
+
+        echo json_encode(['success' => true, 'message' => "Form rejected and deleted"]);
+    } catch (Exception $e) {
+        $conn->rollback();
+        echo json_encode(['success' => false, 'message' => "Error rejecting form"]);
+    }
 }
 ?>
