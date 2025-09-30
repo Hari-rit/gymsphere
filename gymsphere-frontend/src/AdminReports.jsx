@@ -7,6 +7,7 @@ import {
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 
+// Normalize Attendance Data
 function normalizeSummary(resp = {}) {
   const monthlyRaw = resp.monthly || {};
   const allRaw = resp.all_time || resp.alltime || {};
@@ -31,6 +32,7 @@ function normalizeSummary(resp = {}) {
 }
 
 function AdminReports() {
+  // Attendance state
   const [summary, setSummary] = useState({
     monthly: { present: 0, absent: 0, sessions: 0 },
     all_time: { present: 0, absent: 0, sessions: 0 },
@@ -38,16 +40,27 @@ function AdminReports() {
   });
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
-
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [attendance, setAttendance] = useState([]);
 
-  // Filters
+  // Payment state
+  const [paySummary, setPaySummary] = useState({
+    summary: {
+      monthly: { collected: 0, pending: 0 },
+      all_time: { collected: 0, pending: 0 },
+      total_members: 0,
+    },
+    members: [],
+  });
+  const [payErr, setPayErr] = useState("");
+  const [payLoading, setPayLoading] = useState(false);
+
+  // Attendance filters
   const [filterTrainer, setFilterTrainer] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
   const [search, setSearch] = useState("");
 
-  // Fetch summary
+  // Fetch Attendance Summary
   const fetchSummary = async () => {
     setLoading(true);
     setErr("");
@@ -67,10 +80,12 @@ function AdminReports() {
     }
   };
 
-  // Fetch attendance
+  // Fetch Attendance Records
   const fetchAttendance = async (date) => {
     try {
-      let url = `http://localhost:100/gymsphere-backend/get_attendance_admin.php?date=${date.toISOString().split("T")[0]}`;
+      let url = `http://localhost:100/gymsphere-backend/get_attendance_admin.php?date=${date
+        .toISOString()
+        .split("T")[0]}`;
       const res = await fetch(url, { method: "GET", credentials: "include" });
       const data = await res.json();
       if (data.success) setAttendance(data.records || []);
@@ -81,35 +96,65 @@ function AdminReports() {
     }
   };
 
+  // Fetch Payments
+  const fetchPayments = async () => {
+    setPayLoading(true);
+    setPayErr("");
+    try {
+      const res = await fetch("http://localhost:100/gymsphere-backend/get_payments.php", {
+        method: "GET",
+        credentials: "include",
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.message || "Failed to load payments");
+      setPaySummary(data);
+    } catch (e) {
+      console.error("Error fetching payments:", e);
+      setPayErr(e.message || "Failed to fetch payments");
+    } finally {
+      setPayLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchSummary();
     fetchAttendance(selectedDate);
+    fetchPayments();
   }, [selectedDate]);
 
-  // Chart Data
+  // Attendance Chart Data
   const pieData = [
     { name: "Present", value: summary.monthly.present },
     { name: "Absent", value: summary.monthly.absent },
   ];
   const COLORS = ["#28a745", "#dc3545"];
-
   const barData = [
-    {
-      name: "This Month",
-      Present: summary.monthly.present,
-      Absent: summary.monthly.absent,
+    { name: "This Month", Present: summary.monthly.present, Absent: summary.monthly.absent },
+    { name: "All Time", Present: summary.all_time.present, Absent: summary.all_time.absent },
+  ];
+
+  // Payment Chart Data
+  const payPie = [
+    { name: "Collected", value: paySummary.summary.monthly.collected },
+    { name: "Pending", value: paySummary.summary.monthly.pending },
+  ];
+  const payBar = [
+    { 
+      name: "This Month", 
+      Collected: paySummary.summary.monthly.collected, 
+      Pending: paySummary.summary.monthly.pending 
     },
-    {
-      name: "All Time",
-      Present: summary.all_time.present,
-      Absent: summary.all_time.absent,
+    { 
+      name: "All Time", 
+      Collected: paySummary.summary.all_time.collected, 
+      Pending: paySummary.summary.all_time.pending 
     },
   ];
 
   // Trainers list
   const trainerList = [...new Set(attendance.map((a) => a.trainer_name || "Unassigned"))];
 
-  // Apply filters
+  // Apply filters to attendance
   const filteredAttendance = attendance.filter((a) => {
     if (filterTrainer !== "all" && a.trainer_name !== filterTrainer) return false;
     if (filterStatus !== "all" && a.status !== filterStatus) return false;
@@ -119,7 +164,7 @@ function AdminReports() {
 
   return (
     <div className="container-fluid py-4">
-      {/* HEADER */}
+      {/* ---------------- ATTENDANCE REPORTS ---------------- */}
       <div className="d-flex justify-content-between align-items-center mb-3">
         <h2 className="mb-0">📊 Attendance Reports (Admin)</h2>
         <button
@@ -135,7 +180,7 @@ function AdminReports() {
       </div>
       {err && <div className="alert alert-warning">⚠️ {err}</div>}
 
-      {/* SUMMARY CARDS */}
+      {/* Attendance Summary Cards */}
       <h4 className="mb-3 text-info text-center">📅 This Month</h4>
       <div className="row g-4 text-center mb-4">
         {[
@@ -155,8 +200,7 @@ function AdminReports() {
         ))}
       </div>
 
-      {/* CHARTS */}
-      <h4 className="text-info text-center mb-4">📈 Visual Insights</h4>
+      {/* Attendance Charts */}
       <div className="row mb-5">
         <div className="col-md-6">
           <div className="card bg-dark bg-opacity-50 text-white shadow rounded-4 p-3">
@@ -192,7 +236,7 @@ function AdminReports() {
         </div>
       </div>
 
-      {/* CALENDAR + ATTENDANCE TABLE */}
+      {/* Attendance Table */}
       <h4 className="text-info text-center mb-3">📅 Attendance Records</h4>
       <div className="row">
         <div className="col-md-4 mb-4">
@@ -200,9 +244,7 @@ function AdminReports() {
         </div>
         <div className="col-md-8">
           <div className="card bg-dark bg-opacity-50 text-white shadow rounded-4 p-3">
-            <h6 className="text-center mb-3">
-              Records for {selectedDate.toDateString()}
-            </h6>
+            <h6 className="text-center mb-3">Records for {selectedDate.toDateString()}</h6>
 
             {/* Filters */}
             <div className="d-flex gap-3 mb-3 flex-wrap">
@@ -264,6 +306,99 @@ function AdminReports() {
             )}
           </div>
         </div>
+      </div>
+
+      {/* ---------------- PAYMENT REPORTS ---------------- */}
+      <div className="d-flex justify-content-between align-items-center my-4">
+        <h2 className="mb-0">💰 Payment Reports (Admin)</h2>
+        <button className="btn btn-info" onClick={fetchPayments} disabled={payLoading}>
+          {payLoading ? "Refreshing…" : "↻ Refresh"}
+        </button>
+      </div>
+      {payErr && <div className="alert alert-warning">⚠️ {payErr}</div>}
+
+      {/* Payment Summary */}
+      <div className="row g-4 text-center mb-4">
+        {[
+          { label: "💵 Collected", value: `₹${paySummary.summary.monthly.collected}`, color: "text-success" },
+          { label: "🕒 Pending", value: `₹${paySummary.summary.monthly.pending}`, color: "text-danger" },
+          { label: "👥 Members", value: paySummary.summary.total_members, color: "text-info" },
+          { label: "🏦 All-Time", value: `₹${paySummary.summary.all_time.collected}`, color: "text-warning" },
+        ].map((card, i) => (
+          <div className="col-md-3" key={i}>
+            <div className="card bg-dark bg-opacity-50 text-white shadow rounded-4">
+              <div className="card-body">
+                <h6>{card.label}</h6>
+                <p className={`fw-bold fs-4 ${card.color}`}>{card.value}</p>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Payment Charts */}
+      <div className="row mb-5">
+        <div className="col-md-6">
+          <div className="card bg-dark bg-opacity-50 text-white shadow rounded-4 p-3">
+            <h6 className="text-center mb-3">This Month (Collected vs Pending)</h6>
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie data={payPie} dataKey="value" cx="50%" cy="50%" outerRadius={100} label>
+                  {payPie.map((entry, index) => (
+                    <Cell key={index} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+        <div className="col-md-6">
+          <div className="card bg-dark bg-opacity-50 text-white shadow rounded-4 p-3">
+            <h6 className="text-center mb-3">Monthly vs All Time</h6>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={payBar}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" stroke="#fff" />
+                <YAxis stroke="#fff" />
+                <Tooltip />
+                <Legend />
+                <Bar dataKey="Collected" fill="#28a745" />
+                <Bar dataKey="Pending" fill="#dc3545" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </div>
+
+      {/* Member Payments Table */}
+      <div className="card bg-dark bg-opacity-50 text-white shadow rounded-4 p-3">
+        <h6 className="text-center mb-3">👥 Member Payments</h6>
+        {paySummary.members && paySummary.members.length > 0 ? (
+          <table className="table table-dark table-striped text-center">
+            <thead>
+              <tr>
+                <th>Member</th>
+                <th>Status</th>
+                <th>Last Payment</th>
+              </tr>
+            </thead>
+            <tbody>
+              {paySummary.members.map((m, i) => (
+                <tr key={i}>
+                  <td>{m.username}</td>
+                  <td className={m.paid ? "text-success" : "text-danger"}>
+                    {m.paid ? "Paid" : "Pending"}
+                  </td>
+                  <td>{m.last_payment || "—"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <p className="text-center text-muted">No member payment data.</p>
+        )}
       </div>
     </div>
   );

@@ -6,6 +6,7 @@ import WorkoutView from "./WorkoutView";
 import DietView from "./DietView";
 import FitnessForm from "./FitnessForm";
 import MemberAttendanceCalendar from "./MemberAttendanceCalendar";
+import PaymentButton from "./PaymentButton"; // ✅
 
 function MemberDashboard({ username, userId, onLogout }) {
   const [submitted, setSubmitted] = useState(false);
@@ -26,6 +27,8 @@ function MemberDashboard({ username, userId, onLogout }) {
   });
 
   const [plan, setPlan] = useState(null);
+  const [paymentRequired, setPaymentRequired] = useState(false);
+  const [membershipFee, setMembershipFee] = useState(null); // ✅ show fee in UI
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -59,8 +62,9 @@ function MemberDashboard({ username, userId, onLogout }) {
       .catch((err) => console.error("Error submitting form:", err));
   };
 
-  // ✅ fetch member form + plan
+  // ✅ fetch member form + plan + fee
   useEffect(() => {
+    // fetch form
     fetch("http://localhost:100/gymsphere-backend/get_member_form.php", {
       method: "GET",
       credentials: "include",
@@ -74,24 +78,44 @@ function MemberDashboard({ username, userId, onLogout }) {
       })
       .catch((e) => console.error("get_member_form error:", e));
 
+    // fetch plan
     fetch("http://localhost:100/gymsphere-backend/get_plan.php", {
       method: "GET",
       credentials: "include",
     })
       .then((res) => res.json())
       .then((data) => {
-        if (data.success && data.plan) {
+        if (!data.success && data.message?.includes("Payment required")) {
+          setPaymentRequired(true);
+        } else if (data.success && data.plan) {
           setSubmitted(true);
           setStatus("approved");
           setPlan(data.plan);
         }
       })
       .catch((e) => console.error("get_plan error:", e));
+
+    // fetch membership fee
+    fetch("http://localhost:100/gymsphere-backend/get_fee.php", {
+      method: "GET",
+      credentials: "include",
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) setMembershipFee(data.fee);
+      })
+      .catch((e) => console.error("get_fee error:", e));
   }, []);
 
   const handleCopy = (text) => {
     navigator.clipboard.writeText(text);
     alert("Copied to clipboard!");
+  };
+
+  const handlePaymentComplete = (result) => {
+    if (result === "success") {
+      window.location.reload(); // reload dashboard after payment
+    }
   };
 
   const sidebarItems = [
@@ -146,7 +170,7 @@ function MemberDashboard({ username, userId, onLogout }) {
           </div>
         )}
 
-        {/* Rejected → show form again (reason will be in Notifications, not here) */}
+        {/* Rejected → show form again */}
         {submitted && status === "rejected" && (
           <div className="mt-5 w-100 d-flex justify-content-center">
             <div
@@ -172,8 +196,21 @@ function MemberDashboard({ username, userId, onLogout }) {
           </div>
         )}
 
-        {/* Approved view */}
-        {submitted && status === "approved" && (
+        {/* Approved but payment required */}
+        {submitted && status === "approved" && paymentRequired && (
+          <div className="alert alert-danger text-center">
+            <h4>🚫 Payment Required</h4>
+            <p>
+              You must pay your monthly fee{" "}
+              {membershipFee ? `(₹${membershipFee})` : ""} to access your
+              workout and diet plans.
+            </p>
+            <PaymentButton onPaymentComplete={handlePaymentComplete} />
+          </div>
+        )}
+
+        {/* Approved and paid → show dashboard */}
+        {submitted && status === "approved" && !paymentRequired && (
           <div className="container mt-3">
             {activeView === "dashboard" && (
               <header className="mb-4 d-flex justify-content-center">
