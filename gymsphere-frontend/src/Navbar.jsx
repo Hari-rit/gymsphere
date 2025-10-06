@@ -113,7 +113,7 @@ function Navbar({ role = "member", username = "", onLogout, onOpenSidebar }) {
       </div>
 
       <div className="ms-auto d-flex align-items-center gap-3">
-        {/* 🔔 Notifications */}
+        {/*  Notifications */}
         <div className="position-relative" ref={dropdownRef}>
           <button
             className="btn btn-sm btn-outline-light rounded-circle"

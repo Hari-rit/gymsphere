@@ -1,7 +1,7 @@
 // src/TrainerAttendanceList.jsx
 import React, { useEffect, useState } from "react";
 import TrainerAttendanceCalendar from "./TrainerAttendanceCalendar";
-import GlassCard from "./GlassCard"; // ✅ reuse glass style
+import GlassCard from "./GlassCard"; //  reuse glass style
 
 function TrainerAttendanceList() {
   const [members, setMembers] = useState([]);

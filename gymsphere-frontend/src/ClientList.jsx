@@ -1,4 +1,4 @@
-// src/ClientList.jsx
+
 import React from "react";
 import GlassCard from "./GlassCard";
 
@@ -23,7 +23,7 @@ function ClientList({
       {approvedForms.map((form) => (
         <div
           key={form.form_id}
-          style={{ width: "100%", maxWidth: "600px" }} // ✅ Centered with max width
+          style={{ width: "100%", maxWidth: "600px" }} // glasscard
         >
           <GlassCard>
             <h5

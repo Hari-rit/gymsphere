@@ -21,7 +21,7 @@ function WorkoutView({ plan, handleCopy }) {
       <p style={{ whiteSpace: "pre-line", lineHeight: "1.6" }}>
         {plan
           ? plan.workout_plan
-          : "Push/Pull/Legs 6x per week with progressive overload."}
+          : "Waiting for trainer to generate."}
       </p>
       <button
         className="btn btn-outline-light btn-sm mt-3"
@@ -30,7 +30,7 @@ function WorkoutView({ plan, handleCopy }) {
           handleCopy(
             plan
               ? plan.workout_plan
-              : "Push/Pull/Legs 6x per week with progressive overload."
+              : "Waiting for trainer to generate."
           )
         }
       >

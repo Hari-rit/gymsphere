@@ -6,7 +6,8 @@ import WorkoutView from "./WorkoutView";
 import DietView from "./DietView";
 import FitnessForm from "./FitnessForm";
 import MemberAttendanceCalendar from "./MemberAttendanceCalendar";
-import PaymentButton from "./PaymentButton"; // ✅
+import PaymentButton from "./PaymentButton";
+import PaymentHistory from "./PaymentHistory"; 
 
 function MemberDashboard({ username, userId, onLogout }) {
   const [submitted, setSubmitted] = useState(false);
@@ -28,7 +29,7 @@ function MemberDashboard({ username, userId, onLogout }) {
 
   const [plan, setPlan] = useState(null);
   const [paymentRequired, setPaymentRequired] = useState(false);
-  const [membershipFee, setMembershipFee] = useState(null); // ✅ show fee in UI
+  const [membershipFee, setMembershipFee] = useState(null);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -42,7 +43,6 @@ function MemberDashboard({ username, userId, onLogout }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-
     fetch("http://localhost:100/gymsphere-backend/submit_form.php", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -62,7 +62,7 @@ function MemberDashboard({ username, userId, onLogout }) {
       .catch((err) => console.error("Error submitting form:", err));
   };
 
-  // ✅ fetch member form + plan + fee
+  //  fetch member form,plan,fee
   useEffect(() => {
     // fetch form
     fetch("http://localhost:100/gymsphere-backend/get_member_form.php", {
@@ -123,7 +123,7 @@ function MemberDashboard({ username, userId, onLogout }) {
     { key: "workout", label: "💪 Workout Plan", onClick: () => setActiveView("workout") },
     { key: "diet", label: "🥗 Diet Plan", onClick: () => setActiveView("diet") },
     { key: "attendance", label: "📅 Attendance", onClick: () => setActiveView("attendance") },
-    { key: "progress", label: "📊 Progress (Soon)", onClick: () => {}, disabled: true },
+    { key: "payments", label: "💸 Payment History", onClick: () => setActiveView("payments") }, 
   ];
 
   return (
@@ -135,7 +135,12 @@ function MemberDashboard({ username, userId, onLogout }) {
         backgroundPosition: "center",
       }}
     >
-      <Navbar role="member" username={username} onLogout={onLogout} onOpenSidebar={() => setSidebarOpen(true)} />
+      <Navbar
+        role="member"
+        username={username}
+        onLogout={onLogout}
+        onOpenSidebar={() => setSidebarOpen(true)}
+      />
 
       <Sidebar
         title="GymSphere"
@@ -229,7 +234,7 @@ function MemberDashboard({ username, userId, onLogout }) {
                     WELCOME BACK 👋
                   </h1>
                   <p className="mb-0" style={{ color: "rgba(255,255,255,0.85)" }}>
-                    Use the sidebar to access your workout, diet, and attendance.
+                    Use the sidebar to access your workout, diet, attendance, or payment history.
                   </p>
                 </div>
               </header>
@@ -238,6 +243,7 @@ function MemberDashboard({ username, userId, onLogout }) {
             {activeView === "workout" && <WorkoutView plan={plan} handleCopy={handleCopy} />}
             {activeView === "diet" && <DietView plan={plan} handleCopy={handleCopy} />}
             {activeView === "attendance" && <MemberAttendanceCalendar />}
+            {activeView === "payments" && <PaymentHistory />} {/*  SHOW HISTORY */}
           </div>
         )}
       </div>

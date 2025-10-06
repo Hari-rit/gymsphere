@@ -83,7 +83,7 @@ function TrainerReports() {
   return (
     <div className="container-fluid py-4">
       <div className="d-flex justify-content-between align-items-center mb-3">
-        <h2 className="mb-0">📊 Attendance Reports</h2>
+        <h2 className="mb-0"> Attendance Reports</h2>
         <button
           className="btn btn-info"
           onClick={fetchSummary}
@@ -109,7 +109,7 @@ function TrainerReports() {
         <div className="col-md-3">
           <div className="card bg-dark bg-opacity-50 text-white shadow rounded-4">
             <div className="card-body">
-              <h6>✅ Present</h6>
+              <h6> Present</h6>
               <p className="fw-bold text-success fs-4">
                 {summary.monthly.present}
               </p>
@@ -120,7 +120,7 @@ function TrainerReports() {
         <div className="col-md-3">
           <div className="card bg-dark bg-opacity-50 text-white shadow rounded-4">
             <div className="card-body">
-              <h6>❌ Absent</h6>
+              <h6> Absent</h6>
               <p className="fw-bold text-danger fs-4">
                 {summary.monthly.absent}
               </p>
@@ -131,7 +131,7 @@ function TrainerReports() {
         <div className="col-md-3">
           <div className="card bg-dark bg-opacity-50 text-white shadow rounded-4">
             <div className="card-body">
-              <h6>👥 Clients</h6>
+              <h6> Clients</h6>
               <p className="fw-bold text-info fs-4">{summary.total_clients}</p>
             </div>
           </div>
@@ -140,7 +140,7 @@ function TrainerReports() {
         <div className="col-md-3">
           <div className="card bg-dark bg-opacity-50 text-white shadow rounded-4">
             <div className="card-body">
-              <h6>📅 Sessions</h6>
+              <h6> Sessions</h6>
               <p className="fw-bold text-warning fs-4">
                 {summary.monthly.sessions}
               </p>
@@ -150,12 +150,12 @@ function TrainerReports() {
       </div>
 
       {/* All time */}
-      <h4 className="mb-3 text-info text-center">🌍 All Time</h4>
+      <h4 className="mb-3 text-info text-center"> All Time</h4>
       <div className="row g-4 text-center mb-4">
         <div className="col-md-3">
           <div className="card bg-dark bg-opacity-50 text-white shadow rounded-4">
             <div className="card-body">
-              <h6>✅ Present</h6>
+              <h6> Present</h6>
               <p className="fw-bold text-success fs-4">
                 {summary.all_time.present}
               </p>
@@ -166,7 +166,7 @@ function TrainerReports() {
         <div className="col-md-3">
           <div className="card bg-dark bg-opacity-50 text-white shadow rounded-4">
             <div className="card-body">
-              <h6>❌ Absent</h6>
+              <h6> Absent</h6>
               <p className="fw-bold text-danger fs-4">
                 {summary.all_time.absent}
               </p>
@@ -177,7 +177,7 @@ function TrainerReports() {
         <div className="col-md-3">
           <div className="card bg-dark bg-opacity-50 text-white shadow rounded-4">
             <div className="card-body">
-              <h6>👥 Clients</h6>
+              <h6> Clients</h6>
               <p className="fw-bold text-info fs-4">{summary.total_clients}</p>
             </div>
           </div>
@@ -186,7 +186,7 @@ function TrainerReports() {
         <div className="col-md-3">
           <div className="card bg-dark bg-opacity-50 text-white shadow rounded-4">
             <div className="card-body">
-              <h6>📅 Sessions</h6>
+              <h6> Sessions</h6>
               <p className="fw-bold text-warning fs-4">
                 {summary.all_time.sessions}
               </p>

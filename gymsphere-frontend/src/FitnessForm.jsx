@@ -1,4 +1,4 @@
-    // src/FitnessForm.jsx
+
 import React from "react";
 
 function FitnessForm({ memberData, handleInputChange, handleSliderChange, handleSubmit }) {

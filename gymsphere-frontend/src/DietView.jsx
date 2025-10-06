@@ -21,7 +21,7 @@ function DietView({ plan, handleCopy }) {
       <p style={{ whiteSpace: "pre-line", lineHeight: "1.6" }}>
         {plan
           ? plan.diet_plan
-          : "High protein (2g/kg bodyweight), complex carbs, healthy fats."}
+          : "Waiting for trainer to generate."}
       </p>
       <button
         className="btn btn-outline-light btn-sm mt-3"
@@ -30,7 +30,7 @@ function DietView({ plan, handleCopy }) {
           handleCopy(
             plan
               ? plan.diet_plan
-              : "High protein (2g/kg bodyweight), complex carbs, healthy fats."
+              : "Waiting for trainer to generate."
           )
         }
       >

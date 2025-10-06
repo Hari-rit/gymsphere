@@ -20,7 +20,7 @@ function App() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // ✅ Logout now calls backend too
+  //  Logout now calls backend too
   const handleLogout = useCallback(() => {
     setTransitioning(true);
 
@@ -39,7 +39,7 @@ function App() {
     });
   }, [navigate]);
 
-  // ✅ Session check every 1 minute
+  //  Session check every 1 minute
   useEffect(() => {
     const interval = setInterval(() => {
       fetch('http://localhost:100/gymsphere-backend/check-session.php', {
@@ -58,7 +58,7 @@ function App() {
     return () => clearInterval(interval);
   }, [handleLogout]);
 
-  // ✅ On initial load, check localStorage
+  //  On initial load, check localStorage
   useEffect(() => {
     const storedUser = JSON.parse(localStorage.getItem('user'));
     if (storedUser) {
@@ -66,7 +66,7 @@ function App() {
       if (location.pathname === '/') {
         if (storedUser.role === 'member') navigate('/member');
         else if (storedUser.role === 'trainer') navigate('/trainer');
-        else if (storedUser.role === 'admin') navigate('/admin'); // ✅ added
+        else if (storedUser.role === 'admin') navigate('/admin'); 
       }
     }
     setLoading(false);
@@ -81,7 +81,7 @@ function App() {
       setTransitioning(false);
       if (userData.role === 'member') navigate('/member');
       else if (userData.role === 'trainer') navigate('/trainer');
-      else if (userData.role === 'admin') navigate('/admin'); // ✅ added
+      else if (userData.role === 'admin') navigate('/admin'); 
     }, 1000);
   };
 
@@ -112,7 +112,7 @@ function App() {
                     style={{ height: '220px', width:'250px',marginBottom: '10px' }}
                   />
                   <h1 className="mb-3 heading-font text-white">WELCOME TO GYMSPHERE</h1>
-                  <p className="lead text-white">Your AI-powered gym ecosystem starts here.</p>
+                  <p className="lead text-white">Smarter Way TO Manager Your Gym</p>
 
                   <div className="d-flex justify-content-center gap-3 mt-4 responsive-buttons">
                     <button
@@ -159,7 +159,7 @@ function App() {
               }
             />
             <Route
-              path="/admin" // ✅ new route
+              path="/admin" 
               element={
                 <ProtectedRoute user={user} allowedRole="admin">
                   <AdminDashboard username={user?.username} onLogout={handleLogout} />
@@ -167,7 +167,7 @@ function App() {
               }
             />
 
-            {/* 🔁 Catch All */}
+            {/*  Catch All */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         )}

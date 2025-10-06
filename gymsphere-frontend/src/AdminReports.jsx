@@ -164,9 +164,9 @@ function AdminReports() {
 
   return (
     <div className="container-fluid py-4">
-      {/* ---------------- ATTENDANCE REPORTS ---------------- */}
+      {/*ATTENDANCE REPORT*/}
       <div className="d-flex justify-content-between align-items-center mb-3">
-        <h2 className="mb-0">📊 Attendance Reports (Admin)</h2>
+        <h2 className="mb-0">Attendance Reports</h2>
         <button
           className="btn btn-info"
           onClick={() => {
@@ -181,13 +181,13 @@ function AdminReports() {
       {err && <div className="alert alert-warning">⚠️ {err}</div>}
 
       {/* Attendance Summary Cards */}
-      <h4 className="mb-3 text-info text-center">📅 This Month</h4>
+      <h4 className="mb-3 text-info text-center">This Month</h4>
       <div className="row g-4 text-center mb-4">
         {[
-          { label: "✅ Present", value: summary.monthly.present, color: "text-success" },
-          { label: "❌ Absent", value: summary.monthly.absent, color: "text-danger" },
-          { label: "👥 Clients", value: summary.total_clients, color: "text-info" },
-          { label: "📅 Sessions", value: summary.monthly.sessions, color: "text-warning" },
+          { label: " Present", value: summary.monthly.present, color: "text-success" },
+          { label: " Absent", value: summary.monthly.absent, color: "text-danger" },
+          { label: " Clients", value: summary.total_clients, color: "text-info" },
+          { label: " Sessions", value: summary.monthly.sessions, color: "text-warning" },
         ].map((card, i) => (
           <div className="col-md-3" key={i}>
             <div className="card bg-dark bg-opacity-50 text-white shadow rounded-4">
@@ -237,7 +237,7 @@ function AdminReports() {
       </div>
 
       {/* Attendance Table */}
-      <h4 className="text-info text-center mb-3">📅 Attendance Records</h4>
+      <h4 className="text-info text-center mb-3">Attendance Records</h4>
       <div className="row">
         <div className="col-md-4 mb-4">
           <Calendar value={selectedDate} onChange={setSelectedDate} />
@@ -308,9 +308,9 @@ function AdminReports() {
         </div>
       </div>
 
-      {/* ---------------- PAYMENT REPORTS ---------------- */}
+      {/*PAYMENT REPORTS  */}
       <div className="d-flex justify-content-between align-items-center my-4">
-        <h2 className="mb-0">💰 Payment Reports (Admin)</h2>
+        <h2 className="mb-0">Payment Reports (Admin)</h2>
         <button className="btn btn-info" onClick={fetchPayments} disabled={payLoading}>
           {payLoading ? "Refreshing…" : "↻ Refresh"}
         </button>
@@ -320,10 +320,10 @@ function AdminReports() {
       {/* Payment Summary */}
       <div className="row g-4 text-center mb-4">
         {[
-          { label: "💵 Collected", value: `₹${paySummary.summary.monthly.collected}`, color: "text-success" },
-          { label: "🕒 Pending", value: `₹${paySummary.summary.monthly.pending}`, color: "text-danger" },
-          { label: "👥 Members", value: paySummary.summary.total_members, color: "text-info" },
-          { label: "🏦 All-Time", value: `₹${paySummary.summary.all_time.collected}`, color: "text-warning" },
+          { label: " Collected", value: `₹${paySummary.summary.monthly.collected}`, color: "text-success" },
+          { label: " Pending", value: `₹${paySummary.summary.monthly.pending}`, color: "text-danger" },
+          { label: " Members", value: paySummary.summary.total_members, color: "text-info" },
+          { label: " All-Time", value: `₹${paySummary.summary.all_time.collected}`, color: "text-warning" },
         ].map((card, i) => (
           <div className="col-md-3" key={i}>
             <div className="card bg-dark bg-opacity-50 text-white shadow rounded-4">
@@ -374,7 +374,7 @@ function AdminReports() {
 
       {/* Member Payments Table */}
       <div className="card bg-dark bg-opacity-50 text-white shadow rounded-4 p-3">
-        <h6 className="text-center mb-3">👥 Member Payments</h6>
+        <h6 className="text-center mb-3">Member Payments</h6>
         {paySummary.members && paySummary.members.length > 0 ? (
           <table className="table table-dark table-striped text-center">
             <thead>

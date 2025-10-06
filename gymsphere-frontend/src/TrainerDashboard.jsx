@@ -5,8 +5,8 @@ import PlanModal from "./PlanModal";
 import ClientList from "./ClientList";
 import Navbar from "./Navbar";
 import Sidebar from "./Sidebar";
-import TrainerAttendanceList from "./TrainerAttendanceList"; // ✅ Attendance View
-import TrainerReports from "./TrainerReports"; // ✅ New Reports Component
+import TrainerAttendanceList from "./TrainerAttendanceList"; //  Attendance View
+import TrainerReports from "./TrainerReports"; 
 
 function TrainerDashboard({ username, onLogout }) {
   const [forms, setForms] = useState([]);
@@ -253,7 +253,7 @@ function TrainerDashboard({ username, onLogout }) {
     { key: "clients", label: "My Clients" },
     { key: "requests", label: "Member Requests" },
     { key: "attendance", label: "Attendance" },
-    { key: "reports", label: "Reports" }, // ✅ now uses separate component
+    { key: "reports", label: "Reports" }, //  now uses separate component
     { key: "analytics", label: "Analytics (Soon)", disabled: true },
   ];
 
@@ -468,7 +468,7 @@ function TrainerDashboard({ username, onLogout }) {
         {/* ATTENDANCE TAB */}
         {activeView === "attendance" && (
           <div className="d-flex flex-column align-items-center gap-4">
-            <TrainerAttendanceList /> {/* ✅ Attendance View integration */}
+            <TrainerAttendanceList /> {/*  Attendance View integration */}
           </div>
         )}
       </div>

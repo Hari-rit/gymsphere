@@ -9,7 +9,7 @@ export default function PaymentButton({ onPaymentComplete }) {
     setLoading(true);
     setResult(null);
     try {
-      // ✅ No amount sent, backend uses DB membership_fee
+      //  No amount sent, backend uses DB membership_fee
       const res = await fetch("http://localhost:100/gymsphere-backend/dummy_create_payment.php", {
         method: "POST",
         credentials: "include",
@@ -19,21 +19,21 @@ export default function PaymentButton({ onPaymentComplete }) {
       const data = await res.json();
 
       if (data.success) {
-        setResult(`✅ Payment successful! Amount: ₹${data.amount}`);
+        setResult(` Payment successful! Amount: ₹${data.amount}`);
         if (onPaymentComplete) onPaymentComplete("success");
       } else {
         // Special handling for duplicate payment
         if (data.message && data.message.includes("already paid")) {
-          setResult("ℹ️ You have already paid for this month.");
+          setResult(" You have already paid for this month.");
           if (onPaymentComplete) onPaymentComplete("duplicate");
         } else {
-          setResult("❌ Payment failed: " + (data.message || "Unknown error"));
+          setResult(" Payment failed: " + (data.message || "Unknown error"));
           if (onPaymentComplete) onPaymentComplete("failed");
         }
       }
     } catch (err) {
       console.error("Payment error:", err);
-      setResult("⚠️ Error while processing payment.");
+      setResult(" Error while processing payment.");
       if (onPaymentComplete) onPaymentComplete("error");
     } finally {
       setLoading(false);

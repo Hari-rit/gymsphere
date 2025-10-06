@@ -28,7 +28,7 @@ function MemberAttendanceCalendar() {
       .finally(() => setLoading(false));
   }, []);
 
-  // ✅ Highlight logic
+  //  Highlight logic
   const tileClassName = ({ date }) => {
     const dateStr = date.toISOString().split("T")[0];
 

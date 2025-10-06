@@ -1,15 +1,6 @@
 // src/Sidebar.jsx
 import React from "react";
 
-/*
-  Sidebar props:
-  - title (string) - optional
-  - open (bool) - whether sidebar is visible
-  - onClose (fn) - close handler
-  - items (array) - list of { key?, label, onClick?, disabled? }
-  - activeView (string) - optional, current view key for highlighting
-  - setActiveView (fn) - optional, will be used if item.onClick isn't provided and item.key exists
-*/
 function Sidebar({ title = "GymSphere", open, onClose, items = [], activeView, setActiveView }) {
   if (!open) return null;
 

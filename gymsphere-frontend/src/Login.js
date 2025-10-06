@@ -34,15 +34,15 @@ function Login({ onLogin }) {
       if (data.success) {
         const { role, username, id } = data.user;
 
-        // 🔹 Pass user data up to parent if needed
+        //  Pass user data up to parent if needed
         if (onLogin) onLogin(data.user);
 
-        // 🔹 Store session in sessionStorage
+        //  Store session in sessionStorage
         sessionStorage.setItem('username', username);
         sessionStorage.setItem('role', role);
         sessionStorage.setItem('userId', id);
 
-        // 🔹 Redirect by role
+        //  Redirect by role
         if (role === 'admin') {
           navigate('/admin');
         } else if (role === 'trainer') {

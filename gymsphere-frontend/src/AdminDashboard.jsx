@@ -1,9 +1,8 @@
-// src/AdminDashboard.jsx
 import React, { useState, useEffect } from "react";
 import UsersTable from "./UsersTable";
 import Navbar from "./Navbar";
 import Sidebar from "./Sidebar";
-import AdminReports from "./AdminReports"; // ✅ Import reports
+import AdminReports from "./AdminReports"; 
 
 function AdminDashboard({ username, onLogout }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -14,7 +13,7 @@ function AdminDashboard({ username, onLogout }) {
   const [err, setErr] = useState("");
 
   useEffect(() => {
-    if (activeView === "dashboard" || activeView === "reports") return; // ✅ Don't fetch when on reports
+    if (activeView === "dashboard" || activeView === "reports") return; //  Don't fetch when on reports
     setLoading(true);
     setErr("");
 
@@ -63,11 +62,11 @@ function AdminDashboard({ username, onLogout }) {
         open={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
         items={[
-          { label: "🏠 Dashboard", onClick: () => setActiveView("dashboard") },
-          { label: "👥 Manage Users", onClick: () => setActiveView("users") },
-          { label: "🏋️ Trainers", onClick: () => setActiveView("trainers") },
-          { label: "💪 Members", onClick: () => setActiveView("members") },
-          { label: "📊 Reports", onClick: () => setActiveView("reports") }, // ✅ Reports tab
+          { label: " Dashboard", onClick: () => setActiveView("dashboard") },
+          { label: " Manage Users", onClick: () => setActiveView("users") },
+          { label: " Trainers", onClick: () => setActiveView("trainers") },
+          { label: " Members", onClick: () => setActiveView("members") },
+          { label: " Reports", onClick: () => setActiveView("reports") }, //  Reports tab
         ]}
       />
 
@@ -98,7 +97,7 @@ function AdminDashboard({ username, onLogout }) {
               maxWidth: "1000px",
             }}
           >
-            <h3 className="text-info mb-3">👥 All Users</h3>
+            <h3 className="text-info mb-3"> All Users</h3>
             <UsersTable list={users} loading={loading} err={err} />
           </div>
         )}
@@ -112,7 +111,7 @@ function AdminDashboard({ username, onLogout }) {
               maxWidth: "1000px",
             }}
           >
-            <h3 className="text-warning mb-3">🏋️ Trainers</h3>
+            <h3 className="text-warning mb-3"> Trainers</h3>
             <UsersTable list={trainers} loading={loading} err={err} />
           </div>
         )}
@@ -126,7 +125,7 @@ function AdminDashboard({ username, onLogout }) {
               maxWidth: "1000px",
             }}
           >
-            <h3 className="text-success mb-3">💪 Members</h3>
+            <h3 className="text-success mb-3"> Members</h3>
             <UsersTable list={members} loading={loading} err={err} />
           </div>
         )}
@@ -140,7 +139,7 @@ function AdminDashboard({ username, onLogout }) {
               maxWidth: "1100px",
             }}
           >
-            <AdminReports /> {/* ✅ Integrated reports view */}
+            <AdminReports /> {/*  Integrated reports view */}
           </div>
         )}
       </div>

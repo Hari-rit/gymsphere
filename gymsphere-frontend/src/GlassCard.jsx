@@ -1,21 +1,21 @@
-// src/GlassCard.jsx
+
 import React from "react";
 
 function GlassCard({
   children,
-  maxWidth = "360px",  // ✅ smaller default max width
+  maxWidth = "360px",  
   minWidth = "280px",
   className = "",
-  footer = null, // ✅ Optional footer slot
+  footer = null, 
 }) {
   return (
     <div
       className={`p-4 text-white shadow-lg d-flex flex-column justify-content-between ${className}`}
       style={{
-        maxWidth,            // ✅ prevents 2 cards from stretching
+        maxWidth,            
         minWidth,
         width: "100%",
-        margin: "0.5rem",    // ✅ spacing between cards
+        margin: "0.5rem",    
         borderRadius: "16px",
         background: "rgba(0, 0, 0, 0.55)",
         backdropFilter: "blur(12px)",
@@ -25,7 +25,7 @@ function GlassCard({
     >
       <div className="flex-grow-1">{children}</div>
 
-      {/* ✅ Optional footer area always sticks to bottom */}
+      {/*  Optional footer area always sticks to bottom */}
       {footer && <div className="mt-3">{footer}</div>}
     </div>
   );

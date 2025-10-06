@@ -27,7 +27,7 @@ function TrainerAttendanceCalendar({ member, onBack }) {
       .catch((err) => console.error("Error loading attendance:", err));
   }, [member]);
 
-  // ✅ Update attendance
+  //  Update attendance
   const updateAttendance = (status) => {
     if (!selectedDate) return;
     const dateStr = selectedDate.toISOString().split("T")[0];
@@ -52,7 +52,7 @@ function TrainerAttendanceCalendar({ member, onBack }) {
       .catch((err) => console.error("Error updating attendance:", err));
   };
 
-  // ✅ Highlight logic
+  //  Highlight logic
   const tileClassName = ({ date }) => {
     const dateStr = date.toISOString().split("T")[0];
 
@@ -64,7 +64,7 @@ function TrainerAttendanceCalendar({ member, onBack }) {
     return null;
   };
 
-  // ✅ Rules: allow marking from join date → today, excluding Sundays
+  //  Rules: allow marking from join date → today, excluding Sundays
   const canMarkSelected = () => {
     if (!selectedDate || !joinDate) return false;
 
@@ -114,18 +114,18 @@ function TrainerAttendanceCalendar({ member, onBack }) {
                   className="btn btn-success btn-sm"
                   onClick={() => updateAttendance("present")}
                 >
-                  ✅ Mark Present
+                   Mark Present
                 </button>
                 <button
                   className="btn btn-danger btn-sm"
                   onClick={() => updateAttendance("absent")}
                 >
-                  ❌ Mark Absent
+                   Mark Absent
                 </button>
               </div>
             ) : (
               <p className="text-warning fw-bold">
-                ⚠️ Attendance can only be marked from <b>{joinDate}</b> up to{" "}
+                 Attendance can only be marked from <b>{joinDate}</b> up to{" "}
                 <b>today</b>, excluding Sundays.
               </p>
             )}

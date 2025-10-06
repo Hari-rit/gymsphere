@@ -69,7 +69,7 @@ function UsersTable({ list, loading, err, onUserRemoved }) {
                 </span>
               </td>
               <td>
-                {/* ✅ Hide remove button if user is admin */}
+                {/*  Hide remove button if user is admin */}
                 {u.role !== "admin" && (
                   <button
                     className="btn btn-sm btn-outline-danger"
